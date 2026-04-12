@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Background -->
+  <rect width="64" height="64" rx="14" fill="#DC2626"/>
+
+  <g transform="translate(11 11) scale(1.75)">
+    <defs>
+      <clipPath id="c">
+        <path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/>
+      </clipPath>
+    </defs>
+
+    <!-- Hexagon outline (outer minus inner via evenodd) -->
+    <path fill="white" fill-rule="evenodd" d="
+      M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z
+      M12 20 L5 16 V8 L12 4 L19 8 V16 Z
+    "/>
+
+    <!-- Internal lines clipped to hexagon shape -->
+    <g clip-path="url(#c)" fill="white">
+      <!-- Vertical line: center down -->
+      <rect x="11" y="12" width="2" height="10"/>
+
+      <!-- V-line left arm: (3.29,7) to (12,12) -->
+      <polygon points="2.79,7.87 3.79,6.13 12.50,11.13 11.50,12.87"/>
+
+      <!-- V-line right arm: (12,12) to (20.71,7) -->
+      <polygon points="11.50,11.13 20.21,6.13 21.21,7.87 12.50,12.87"/>
+
+      <!-- Top stripe: (7.5,4.27) to (16.5,9.42) -->
+      <polygon points="7.00,5.14 8.00,3.40 17.00,8.55 16.00,10.29"/>
+    </g>
+  </g>
+</svg>
