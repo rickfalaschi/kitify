@@ -52,7 +52,7 @@ export default async function InvitePage(props: {
     const confirmPassword = formData.get("confirmPassword") as string;
     const inviteToken = formData.get("token") as string;
 
-    if (!password || password.length < 6 || password !== confirmPassword) return;
+    if (!password || password.length < 8 || password !== confirmPassword) return;
 
     const passwordHash = await hash(password, 12);
 

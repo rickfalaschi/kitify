@@ -63,7 +63,7 @@ export default async function UsersPage() {
       });
     } else {
       if (mode === "password") {
-        if (!password || password.length < 6) return;
+        if (!password || password.length < 8) return;
         const passwordHash = await hash(password, 10);
 
         const [newUser] = await db

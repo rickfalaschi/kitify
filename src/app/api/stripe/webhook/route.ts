@@ -31,10 +31,30 @@ export async function POST(req: NextRequest) {
     const orderId = paymentIntent.metadata?.orderId;
 
     if (orderId) {
+      const [order] = await db
+        .select({ id: orders.id, totalAmount: orders.totalAmount })
+        .from(orders)
+        .where(eq(orders.stripePaymentIntentId, paymentIntent.id))
+        .limit(1);
+
+      if (!order) {
+        return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+
+      const expectedAmount = Math.round(
+        Number(order.totalAmount ?? 0) * 100,
+      );
+      if (paymentIntent.amount_received < expectedAmount) {
+        return NextResponse.json(
+          { error: "Amount mismatch" },
+          { status: 400 },
+        );
+      }
+
       await db
         .update(orders)
         .set({ status: "pending", updatedAt: new Date() })
-        .where(eq(orders.stripePaymentIntentId, paymentIntent.id));
+        .where(eq(orders.id, order.id));
     }
   }
 

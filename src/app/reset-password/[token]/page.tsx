@@ -74,7 +74,7 @@ export default async function ResetPasswordPage(props: {
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    if (!password || password.length < 6 || password !== confirmPassword) return;
+    if (!password || password.length < 8 || password !== confirmPassword) return;
 
     const [user] = await db
       .select({ id: users.id, resetTokenExpiry: users.resetTokenExpiry })
@@ -109,7 +109,7 @@ export default async function ResetPasswordPage(props: {
               <Package className="h-4 w-4 text-white" />
             </span>
             <span className="text-lg font-bold tracking-tight text-gray-900">
-              Kits
+              Kitify
             </span>
           </Link>
           <h2 className="mt-6 text-2xl font-bold text-gray-900">

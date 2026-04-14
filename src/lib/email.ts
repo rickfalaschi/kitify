@@ -1,5 +1,13 @@
 import nodemailer from "nodemailer";
 
+function esc(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT) || 465,
@@ -23,7 +31,7 @@ export async function sendPreOrderEmail({
   kitName: string;
   publicUrl: string;
 }) {
-  const greeting = employeeName ? `Hi ${employeeName}` : "Hi";
+  const greeting = employeeName ? `Hi ${esc(employeeName)}` : "Hi";
 
   await transporter.sendMail({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
@@ -33,7 +41,7 @@ export async function sendPreOrderEmail({
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
         <h2 style="color: #111;">${greeting},</h2>
         <p style="color: #444; font-size: 16px; line-height: 1.6;">
-          <strong>${companyName}</strong> has prepared a <strong>${kitName}</strong> for you.
+          <strong>${esc(companyName)}</strong> has prepared a <strong>${esc(kitName)}</strong> for you.
           Please use the link below to choose your preferences and confirm your delivery details.
         </p>
         <div style="margin: 32px 0;">
@@ -65,7 +73,7 @@ export async function sendInviteEmail({
   companyName: string;
   inviteUrl: string;
 }) {
-  const greeting = employeeName ? `Hi ${employeeName}` : "Hi";
+  const greeting = employeeName ? `Hi ${esc(employeeName)}` : "Hi";
 
   await transporter.sendMail({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
@@ -75,7 +83,7 @@ export async function sendInviteEmail({
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
         <h2 style="color: #111;">${greeting},</h2>
         <p style="color: #444; font-size: 16px; line-height: 1.6;">
-          You've been invited to join <strong>${companyName}</strong> on Kitify.
+          You've been invited to join <strong>${esc(companyName)}</strong> on Kitify.
           Please use the link below to set up your password and activate your account.
         </p>
         <div style="margin: 32px 0;">
@@ -131,7 +139,7 @@ export async function sendOrderStatusEmail({
       <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
         <h2 style="color: #111;">Order Status Update</h2>
         <p style="color: #444; font-size: 16px; line-height: 1.6;">
-          The order for <strong>${kitName}</strong> from <strong>${companyName}</strong>
+          The order for <strong>${esc(kitName)}</strong> from <strong>${esc(companyName)}</strong>
           has been updated to <strong>${label}</strong>.
         </p>
         <div style="margin: 32px 0;">

@@ -17,9 +17,6 @@ declare module "next-auth" {
       role: "admin" | "company";
     };
   }
-}
-
-declare module "@auth/core/jwt" {
   interface JWT {
     id: string;
     role: "admin" | "company";
@@ -32,6 +29,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   providers: [
     Credentials({
@@ -74,8 +72,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
+      session.user.id = token.id as string;
+      session.user.role = token.role as "admin" | "company";
       return session;
     },
   },

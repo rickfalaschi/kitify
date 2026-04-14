@@ -34,9 +34,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const ext = file.name.split(".").pop() || "png";
+  const MIME_TO_EXT: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+  };
+  const ext = MIME_TO_EXT[file.type] || "png";
   const key = `${context}/${randomUUID()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (buffer.length > MAX_SIZE) {
+    return NextResponse.json(
+      { error: "File too large. Maximum 5MB." },
+      { status: 400 },
+    );
+  }
 
   const url = await uploadFile(buffer, key, file.type);
 
