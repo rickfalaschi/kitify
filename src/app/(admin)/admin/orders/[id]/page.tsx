@@ -14,9 +14,11 @@ import {
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { SubmitButton } from "@/components/submit-button";
+import { CancelOrderButton } from "@/components/cancel-order-button";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
+import { canAdminCancel } from "@/lib/order-status";
 
 async function updateOrderStatusAction(formData: FormData) {
   "use server";
@@ -93,6 +95,61 @@ async function setShippingCostAction(formData: FormData) {
       updatedAt: new Date(),
     })
     .where(eq(orders.id, orderId));
+
+  revalidatePath(`/admin/orders/${orderId}`);
+  revalidatePath("/admin/orders");
+}
+
+async function cancelOrderAction(formData: FormData) {
+  "use server";
+  const session = await auth();
+  if (!session || session.user.role !== "admin") redirect("/login");
+
+  const orderId = formData.get("orderId") as string;
+
+  const [existing] = await db
+    .select({ status: orders.status })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (!existing) {
+    throw new Error("Order not found.");
+  }
+
+  if (!canAdminCancel(existing.status)) {
+    throw new Error(
+      `Orders in status "${existing.status}" can no longer be cancelled.`,
+    );
+  }
+
+  await db
+    .update(orders)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(orders.id, orderId));
+
+  const [orderInfo] = await db
+    .select({
+      userEmail: users.email,
+      companyName: companies.name,
+      kitName: kits.name,
+    })
+    .from(orders)
+    .innerJoin(companies, eq(orders.companyId, companies.id))
+    .innerJoin(kits, eq(orders.kitId, kits.id))
+    .innerJoin(users, eq(orders.userId, users.id))
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (orderInfo) {
+    sendOrderStatusEmail({
+      to: orderInfo.userEmail,
+      companyName: orderInfo.companyName,
+      kitName: orderInfo.kitName,
+      orderId,
+      newStatus: "cancelled",
+    }).catch(() => {});
+  }
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
@@ -213,7 +270,16 @@ export default async function PedidoDetailPage(props: {
           <ArrowLeft className="mr-1 h-4 w-4" />
           Back to orders
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Order Details</h1>
+          {canAdminCancel(order.status) && (
+            <CancelOrderButton
+              orderId={order.id}
+              cancelAction={cancelOrderAction}
+              confirmText="Cancel this order? The company will be notified by email. This action cannot be undone."
+            />
+          )}
+        </div>
       </div>
 
       <div className="space-y-6 max-w-2xl">

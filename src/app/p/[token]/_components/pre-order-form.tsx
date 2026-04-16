@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 
 type ItemData = {
   kitItemId: string;
@@ -16,6 +16,8 @@ type ItemData = {
   }[];
 };
 
+type PreOrderState = { error?: string; success?: boolean };
+
 type Props = {
   companyName: string;
   kitName: string;
@@ -23,7 +25,10 @@ type Props = {
   deliveryType: "company_address" | "employee_address";
   existingEmployeeName?: string;
   existingSelections: Record<string, Record<string, string>>;
-  completePreOrder: (formData: FormData) => Promise<void>;
+  completePreOrder: (
+    prev: PreOrderState,
+    formData: FormData,
+  ) => Promise<PreOrderState>;
 };
 
 type Selections = Record<string, Record<string, string>>;
@@ -51,8 +56,15 @@ export function PreOrderForm({
   }
 
   const [selections, setSelections] = useState<Selections>(initialSelections);
+  const [state, formAction, pending] = useActionState<PreOrderState, FormData>(
+    completePreOrder,
+    {},
+  );
   const [submitted, setSubmitted] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (state.success) setSubmitted(true);
+  }, [state.success]);
 
   function handleVariationChange(
     kitItemId: string,
@@ -111,23 +123,18 @@ export function PreOrderForm({
           </p>
         </div>
 
-        <form
-          action={async (formData) => {
-            setSubmitting(true);
-            try {
-              await completePreOrder(formData);
-              setSubmitted(true);
-            } finally {
-              setSubmitting(false);
-            }
-          }}
-          className="space-y-6"
-        >
+        <form action={formAction} className="space-y-6">
           <input
             type="hidden"
             name="selections_json"
             value={JSON.stringify(selections)}
           />
+
+          {state.error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              {state.error}
+            </div>
+          )}
 
           {/* Kit Items */}
           <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
@@ -335,10 +342,10 @@ export function PreOrderForm({
           <div className="flex justify-center">
             <button
               type="submit"
-              disabled={submitting}
+              disabled={pending}
               className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-8 hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
-              {submitting ? "Submitting..." : "Confirm Preferences"}
+              {pending ? "Submitting..." : "Confirm Preferences"}
             </button>
           </div>
         </form>

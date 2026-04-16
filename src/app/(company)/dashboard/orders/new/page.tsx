@@ -221,6 +221,26 @@ export default async function NovoPedidoPage(props: {
 
     if (!deliveryType || !kitIdValue) return;
 
+    // For direct orders (not pre-orders), validate the delivery details up
+    // front. Pre-orders intentionally allow blank employee fields because the
+    // employee fills them in via the public /p/<token> link.
+    if (!isPreorder) {
+      if (deliveryType === "company_address") {
+        const companyAddressId = formData.get("companyAddressId") as string;
+        if (!companyAddressId) {
+          throw new Error("Please select a company address before placing the order.");
+        }
+      } else if (deliveryType === "employee_address") {
+        const name = ((formData.get("employeeName") as string) || "").trim();
+        const line1 = ((formData.get("employeeAddressLine1") as string) || "").trim();
+        const city = ((formData.get("employeeCity") as string) || "").trim();
+        const postcode = ((formData.get("employeePostcode") as string) || "").trim();
+        if (!name || !line1 || !city || !postcode) {
+          throw new Error("Please fill in the employee's name, address, city and postcode before placing the order.");
+        }
+      }
+    }
+
     // Parse selections: Record<kitItemId, Record<variationType, variationId>>
     let selections: Record<string, Record<string, string>> = {};
     try {

@@ -32,13 +32,41 @@ export async function POST(req: NextRequest) {
 
     if (orderId) {
       const [order] = await db
-        .select({ id: orders.id, totalAmount: orders.totalAmount })
+        .select({
+          id: orders.id,
+          status: orders.status,
+          totalAmount: orders.totalAmount,
+        })
         .from(orders)
         .where(eq(orders.stripePaymentIntentId, paymentIntent.id))
         .limit(1);
 
       if (!order) {
         return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      }
+
+      // Idempotency: if we already confirmed or advanced the order, ack the
+      // webhook without re-processing. Stripe retries on transient failures
+      // and we don't want to double-advance a shipped/completed order back
+      // to payment_confirmed.
+      const alreadyPaidStatuses = [
+        "payment_confirmed",
+        "in_production",
+        "shipped",
+        "completed",
+        "cancelled",
+      ];
+      if (alreadyPaidStatuses.includes(order.status)) {
+        return NextResponse.json({ received: true, alreadyProcessed: true });
+      }
+
+      // Cross-check: the PaymentIntent metadata.orderId must match the order we
+      // looked up by stripePaymentIntentId. Guards against stale/reused PIs.
+      if (order.id !== orderId) {
+        return NextResponse.json(
+          { error: "Order ID mismatch" },
+          { status: 400 },
+        );
       }
 
       const expectedAmount = Math.round(

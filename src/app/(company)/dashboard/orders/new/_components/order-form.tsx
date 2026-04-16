@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
 
 type VariationOption = {
   variationId: string;
@@ -62,6 +63,21 @@ export function OrderForm({
 
   const [selections, setSelections] = useState<Selections>(initialSelections);
   const [deliveryType, setDeliveryType] = useState<string>("company_address");
+  const [isPending, startTransition] = useTransition();
+
+  async function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      try {
+        await createOrder(formData);
+      } catch (err) {
+        const message =
+          err instanceof Error && err.message
+            ? err.message
+            : "Could not place the order. Please try again.";
+        toast.error(message);
+      }
+    });
+  }
 
   function handleVariationChange(
     kitItemId: string,
@@ -82,7 +98,7 @@ export function OrderForm({
   );
 
   return (
-    <form action={createOrder} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6">
       <input type="hidden" name="kitId" value={kitId} />
       <input
         type="hidden"
@@ -190,6 +206,7 @@ export function OrderForm({
             <div className="ml-7 space-y-2">
               <select
                 name="companyAddressId"
+                required
                 className="w-full max-w-md rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               >
                 <option value="">Select address</option>

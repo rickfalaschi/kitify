@@ -218,7 +218,10 @@ export default async function PreOrderPage(props: {
     allowedByConfig.set(vc.config.id, allowed);
   }
 
-  async function completePreOrder(formData: FormData) {
+  async function completePreOrder(
+    _prev: { error?: string; success?: boolean },
+    formData: FormData,
+  ): Promise<{ error?: string; success?: boolean }> {
     "use server";
 
     const selectionsJson = formData.get("selections_json") as string;
@@ -227,7 +230,7 @@ export default async function PreOrderPage(props: {
     try {
       selections = selectionsJson ? JSON.parse(selectionsJson) : {};
     } catch {
-      return;
+      return { error: "Could not read your selections. Please try again." };
     }
 
     // Re-fetch order to confirm it is still a pending pre-order awaiting the
@@ -238,7 +241,12 @@ export default async function PreOrderPage(props: {
       .where(and(eq(orders.publicToken, token), eq(orders.status, "pending")))
       .limit(1);
 
-    if (!currentOrder) return;
+    if (!currentOrder) {
+      return {
+        error:
+          "This pre-order link is no longer active. Your preferences may have already been submitted.",
+      };
+    }
 
     // Re-fetch the order's snapshotted items (created at pre-order time)
     const currentOrderItems = await db
@@ -377,23 +385,28 @@ export default async function PreOrderPage(props: {
     const updateValues: Partial<typeof orders.$inferInsert> = {};
 
     if (currentOrder.deliveryType === "employee_address") {
-      updateValues.employeeName =
-        (formData.get("employeeName") as string) || currentOrder.employeeName;
-      updateValues.employeeAddressLine1 =
-        (formData.get("employeeAddressLine1") as string) ||
-        currentOrder.employeeAddressLine1;
+      const name = ((formData.get("employeeName") as string) || "").trim();
+      const line1 = ((formData.get("employeeAddressLine1") as string) || "").trim();
+      const city = ((formData.get("employeeCity") as string) || "").trim();
+      const postcode = ((formData.get("employeePostcode") as string) || "").trim();
+      const country = ((formData.get("employeeCountry") as string) || "").trim() || "United Kingdom";
+
+      if (!name || !line1 || !city || !postcode) {
+        return {
+          error:
+            "Please fill in your name, address, city and postcode before confirming.",
+        };
+      }
+
+      updateValues.employeeName = name;
+      updateValues.employeeAddressLine1 = line1;
       updateValues.employeeAddressLine2 =
-        (formData.get("employeeAddressLine2") as string) || null;
-      updateValues.employeeCity =
-        (formData.get("employeeCity") as string) ||
-        currentOrder.employeeCity;
+        ((formData.get("employeeAddressLine2") as string) || "").trim() || null;
+      updateValues.employeeCity = city;
       updateValues.employeeCounty =
-        (formData.get("employeeCounty") as string) || null;
-      updateValues.employeePostcode =
-        (formData.get("employeePostcode") as string) ||
-        currentOrder.employeePostcode;
-      updateValues.employeeCountry =
-        (formData.get("employeeCountry") as string) || "United Kingdom";
+        ((formData.get("employeeCounty") as string) || "").trim() || null;
+      updateValues.employeePostcode = postcode;
+      updateValues.employeeCountry = country;
     }
 
     // Determine if UK or international
@@ -435,6 +448,7 @@ export default async function PreOrderPage(props: {
       .where(eq(orders.id, currentOrder.id));
 
     revalidatePath(`/p/${token}`);
+    return { success: true };
   }
 
   return (

@@ -1,11 +1,44 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { products, productCategories, categories } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { Plus } from "lucide-react";
+import { CategoryFilterSelect } from "@/components/category-filter-select";
 
-export default async function ProdutosPage() {
-  const allProducts = await db.select().from(products).orderBy(products.name);
+export default async function ProdutosPage(props: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  const { category: filterCategoryId } = await props.searchParams;
+
+  const allCategories = await db
+    .select()
+    .from(categories)
+    .orderBy(categories.name);
+
+  const validCategoryId =
+    filterCategoryId && allCategories.some((c) => c.id === filterCategoryId)
+      ? filterCategoryId
+      : undefined;
+
+  // Figure out which product IDs match the filter (if any)
+  let filteredProductIds: string[] | null = null;
+  if (validCategoryId) {
+    const matches = await db
+      .select({ productId: productCategories.productId })
+      .from(productCategories)
+      .where(eq(productCategories.categoryId, validCategoryId));
+    filteredProductIds = matches.map((m) => m.productId);
+  }
+
+  const allProducts = filteredProductIds
+    ? filteredProductIds.length > 0
+      ? await db
+          .select()
+          .from(products)
+          .where(inArray(products.id, filteredProductIds))
+          .orderBy(products.name)
+      : []
+    : await db.select().from(products).orderBy(products.name);
 
   // Fetch all product-category associations with category names
   const associations = await db
@@ -33,6 +66,17 @@ export default async function ProdutosPage() {
           <Plus className="mr-2 h-4 w-4" />
           New Product
         </Link>
+      </div>
+
+      <div className="flex items-center gap-3 mb-4">
+        <CategoryFilterSelect
+          basePath="/admin/products"
+          currentCategoryId={validCategoryId}
+          options={allCategories.map((c) => ({ value: c.id, label: c.name }))}
+        />
+        <span className="text-sm text-gray-500">
+          {allProducts.length} product{allProducts.length !== 1 ? "s" : ""}
+        </span>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -98,7 +142,9 @@ export default async function ProdutosPage() {
                   colSpan={5}
                   className="text-center text-gray-500 py-8"
                 >
-                  No products registered.
+                  {validCategoryId
+                    ? "No products in this category."
+                    : "No products registered."}
                 </td>
               </tr>
             )}

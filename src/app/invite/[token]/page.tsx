@@ -3,8 +3,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
-import { InviteForm } from "./_components/invite-form";
+import { InviteForm, type InviteState } from "./_components/invite-form";
 
 export default async function InvitePage(props: {
   params: Promise<{ token: string }>;
@@ -45,14 +44,36 @@ export default async function InvitePage(props: {
     );
   }
 
-  async function setPassword(formData: FormData) {
+  async function setPasswordAction(
+    _prev: InviteState,
+    formData: FormData,
+  ): Promise<InviteState> {
     "use server";
 
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
     const inviteToken = formData.get("token") as string;
 
-    if (!password || password.length < 8 || password !== confirmPassword) return;
+    if (!inviteToken) {
+      return { error: "Invalid invite token." };
+    }
+    if (!password || password.length < 8) {
+      return { error: "Password must be at least 8 characters." };
+    }
+    if (password !== confirmPassword) {
+      return { error: "Passwords do not match." };
+    }
+
+    // Re-verify token still exists (guards against double-submit)
+    const [existing] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.inviteToken, inviteToken))
+      .limit(1);
+
+    if (!existing) {
+      return { error: "This invite link is no longer valid." };
+    }
 
     const passwordHash = await hash(password, 12);
 
@@ -77,7 +98,7 @@ export default async function InvitePage(props: {
           </p>
         </div>
         <div className="p-6">
-          <InviteForm token={token} setPassword={setPassword} />
+          <InviteForm token={token} setPasswordAction={setPasswordAction} />
         </div>
       </div>
     </div>

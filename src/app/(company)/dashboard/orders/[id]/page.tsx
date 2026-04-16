@@ -2,15 +2,94 @@ import { db } from "@/db";
 import {
   orders,
   kits,
+  companies,
+  users,
   companyAddresses,
   orderItems,
   orderItemSelections,
 } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
-import { notFound } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getCompany } from "../../_lib/get-company";
+import { CancelOrderButton } from "@/components/cancel-order-button";
+import { canCompanyCancel } from "@/lib/order-status";
+import { sendOrderStatusEmail } from "@/lib/email";
+import { auth } from "@/lib/auth";
+
+async function cancelOrderAction(formData: FormData) {
+  "use server";
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const orderId = formData.get("orderId") as string;
+
+  const [existing] = await db
+    .select({
+      id: orders.id,
+      status: orders.status,
+      companyId: orders.companyId,
+      stripePaymentIntentId: orders.stripePaymentIntentId,
+    })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (!existing) {
+    throw new Error("Order not found.");
+  }
+
+  // Verify the logged-in user belongs to the order's company
+  const { company } = await getCompany();
+  if (existing.companyId !== company.id) {
+    throw new Error("You do not have permission to cancel this order.");
+  }
+
+  if (!canCompanyCancel(existing.status)) {
+    throw new Error(
+      "This order can no longer be cancelled. Please contact support if you need to cancel it.",
+    );
+  }
+
+  if (existing.stripePaymentIntentId) {
+    throw new Error(
+      "This order already has a payment attached. Please contact support to cancel it.",
+    );
+  }
+
+  await db
+    .update(orders)
+    .set({ status: "cancelled", updatedAt: new Date() })
+    .where(eq(orders.id, orderId));
+
+  const [orderInfo] = await db
+    .select({
+      userEmail: users.email,
+      companyName: companies.name,
+      kitName: kits.name,
+    })
+    .from(orders)
+    .innerJoin(companies, eq(orders.companyId, companies.id))
+    .innerJoin(kits, eq(orders.kitId, kits.id))
+    .innerJoin(users, eq(orders.userId, users.id))
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
+  if (orderInfo) {
+    sendOrderStatusEmail({
+      to: orderInfo.userEmail,
+      companyName: orderInfo.companyName,
+      kitName: orderInfo.kitName,
+      orderId,
+      newStatus: "cancelled",
+    }).catch(() => {});
+  }
+
+  revalidatePath(`/dashboard/orders/${orderId}`);
+  revalidatePath("/dashboard/orders");
+}
 
 const statusConfig = {
   pending: { label: "Pending", className: "bg-orange-100 text-orange-700" },
@@ -102,10 +181,19 @@ export default async function PedidoDetailPage(props: {
           >
             {status.label}
           </span>
+        </div>
+        <div className="flex items-center gap-2">
           {order.status === "awaiting_payment" && (
             <Link href={`/dashboard/orders/${order.id}/pay`} className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-9 px-4 hover:bg-gray-800 transition-colors">
               Pay Now
             </Link>
+          )}
+          {canCompanyCancel(order.status) && !order.stripePaymentIntentId && (
+            <CancelOrderButton
+              orderId={order.id}
+              cancelAction={cancelOrderAction}
+              confirmText="Cancel this order? This action cannot be undone."
+            />
           )}
         </div>
       </div>
