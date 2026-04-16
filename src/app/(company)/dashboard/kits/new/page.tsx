@@ -1,13 +1,16 @@
 import { db } from "@/db";
 import {
   products,
+  productImages,
   productVariations,
+  categories,
+  productCategories,
   kits,
   kitItems,
   kitItemVariations,
   kitItemVariationOptions,
 } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { ArrowLeft } from "lucide-react";
@@ -33,11 +36,54 @@ type KitItemInput = {
 };
 
 export default async function NovoKitPage() {
-  const allProducts = await db
+  const allProductsRaw = await db
     .select()
     .from(products)
     .where(eq(products.active, true))
     .orderBy(products.name);
+
+  // Fetch cover image (lowest sortOrder) for each product from product_images
+  const allProductImages = await db
+    .select({
+      productId: productImages.productId,
+      imageUrl: productImages.imageUrl,
+    })
+    .from(productImages)
+    .orderBy(asc(productImages.sortOrder));
+
+  const coverImageByProduct = allProductImages.reduce<Record<string, string>>(
+    (acc, img) => {
+      if (!acc[img.productId]) acc[img.productId] = img.imageUrl;
+      return acc;
+    },
+    {},
+  );
+
+  const allProducts = allProductsRaw.map((p) => ({
+    ...p,
+    imageUrl: coverImageByProduct[p.id] ?? null,
+  }));
+
+  // Fetch all categories + product<->category relations
+  const allCategories = await db
+    .select()
+    .from(categories)
+    .orderBy(categories.name);
+
+  const allProductCategories = await db
+    .select({
+      productId: productCategories.productId,
+      categoryId: productCategories.categoryId,
+    })
+    .from(productCategories);
+
+  const categoriesByProduct = allProductCategories.reduce<
+    Record<string, string[]>
+  >((acc, row) => {
+    if (!acc[row.productId]) acc[row.productId] = [];
+    acc[row.productId].push(row.categoryId);
+    return acc;
+  }, {});
 
   const allVariations = await db.select().from(productVariations);
 
@@ -138,6 +184,8 @@ export default async function NovoKitPage() {
       <KitBuilderForm
         products={allProducts}
         variationsByProduct={variationsByProduct}
+        categories={allCategories.map((c) => ({ id: c.id, name: c.name }))}
+        categoriesByProduct={categoriesByProduct}
         createKit={createKit}
       />
     </div>

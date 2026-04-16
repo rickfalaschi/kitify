@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 import {
@@ -39,6 +39,11 @@ type VariationsByProduct = Record<
   { color: Variation[]; size: Variation[] }
 >;
 
+type Category = {
+  id: string;
+  name: string;
+};
+
 type VariationConfig = {
   mode: "fixed" | "editable";
   defaultVariationId: string;
@@ -61,39 +66,49 @@ const ITEMS_PER_PAGE = 12;
 export function KitBuilderForm({
   products,
   variationsByProduct,
+  categories = [],
+  categoriesByProduct = {},
   createKit,
 }: {
   products: Product[];
   variationsByProduct: VariationsByProduct;
+  categories?: Category[];
+  categoriesByProduct?: Record<string, string[]>;
   createKit: (formData: FormData) => Promise<void>;
 }) {
   const SESSION_KEY = "kit-builder-draft";
 
-  const [kitName, setKitName] = useState(() => {
-    if (typeof window === "undefined") return "";
-    try {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      return saved ? (JSON.parse(saved).kitName ?? "") : "";
-    } catch { return ""; }
-  });
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = sessionStorage.getItem(SESSION_KEY);
-      return saved ? (JSON.parse(saved).cart ?? []) : [];
-    } catch { return []; }
-  });
+  const [kitName, setKitName] = useState("");
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(
+    null,
+  );
   const [page, setPage] = useState(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
-  // Persist draft to sessionStorage
+  // Hydrate draft from sessionStorage after mount (avoids SSR hydration mismatch)
   useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem(SESSION_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.kitName) setKitName(parsed.kitName);
+        if (Array.isArray(parsed.cart)) setCart(parsed.cart);
+      }
+    } catch {}
+    setHydrated(true);
+  }, []);
+
+  // Persist draft to sessionStorage (skip until hydration is done to avoid overwriting saved draft)
+  useEffect(() => {
+    if (!hydrated) return;
     try {
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ kitName, cart }));
     } catch {}
-  }, [kitName, cart]);
+  }, [kitName, cart, hydrated]);
 
   // Modal state for configuring a product
   const [modalQty, setModalQty] = useState(1);
@@ -103,11 +118,15 @@ export function KitBuilderForm({
 
   /* ----- Filtering & Pagination ----- */
 
-  const filtered = products.filter(
-    (p) =>
+  const filtered = products.filter((p) => {
+    const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase())
-  );
+      p.description?.toLowerCase().includes(search.toLowerCase());
+    const matchesCategory =
+      !selectedCategoryId ||
+      (categoriesByProduct[p.id]?.includes(selectedCategoryId) ?? false);
+    return matchesSearch && matchesCategory;
+  });
   const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
   const paginated = filtered.slice(
     (page - 1) * ITEMS_PER_PAGE,
@@ -257,7 +276,7 @@ export function KitBuilderForm({
 
       {/* Cart Preview */}
       <div className="bg-white rounded-lg border border-gray-200">
-        <div className="p-5 pb-3 flex items-center justify-between">
+        <div className="p-5 pb-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <ShoppingBag className="h-5 w-5 text-red-600" />
             <h3 className="text-base font-semibold text-gray-900">
@@ -269,6 +288,22 @@ export function KitBuilderForm({
               </span>
             )}
           </div>
+          <form
+            action={async (formData: FormData) => {
+              formData.set("name", kitName);
+              formData.set("items_json", JSON.stringify(buildItemsPayload()));
+              try { sessionStorage.removeItem(SESSION_KEY); } catch {}
+              try {
+                await createKit(formData);
+              } catch {
+                toast.error("Failed to create kit.");
+              }
+            }}
+          >
+            <SubmitButton disabled={!kitName.trim() || cart.length === 0} className="h-9 px-5">
+              Create Kit
+            </SubmitButton>
+          </form>
         </div>
         <div className="px-5 pb-5">
           {cart.length === 0 ? (
@@ -383,6 +418,41 @@ export function KitBuilderForm({
               className="w-full rounded-lg border border-gray-300 bg-white pl-9 pr-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
             />
           </div>
+          {categories.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedCategoryId(null);
+                  setPage(1);
+                }}
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                  selectedCategoryId === null
+                    ? "bg-gray-900 text-white"
+                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                }`}
+              >
+                All
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedCategoryId(cat.id);
+                    setPage(1);
+                  }}
+                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                    selectedCategoryId === cat.id
+                      ? "bg-gray-900 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
         <div className="px-5 pb-5">
           {paginated.length === 0 ? (
@@ -399,7 +469,7 @@ export function KitBuilderForm({
                     onClick={() => openProductModal(product)}
                     className="group text-left rounded-lg border border-gray-200 p-3 hover:border-gray-300 transition-colors"
                   >
-                    <div className="aspect-square bg-gray-50 rounded-md flex items-center justify-center mb-2.5 overflow-hidden border border-gray-100">
+                    <div className="aspect-square bg-white rounded-md flex items-center justify-center mb-2.5 overflow-hidden p-6">
                       {product.imageUrl ? (
                         <img
                           src={product.imageUrl}
@@ -454,26 +524,6 @@ export function KitBuilderForm({
         </div>
       </div>
 
-      {/* Create Kit Button */}
-      <div className="flex justify-end">
-        <form
-          action={async (formData: FormData) => {
-            formData.set("name", kitName);
-            formData.set("items_json", JSON.stringify(buildItemsPayload()));
-            try { sessionStorage.removeItem(SESSION_KEY); } catch {}
-            try {
-              await createKit(formData);
-            } catch {
-              toast.error("Failed to create kit.");
-            }
-          }}
-        >
-          <SubmitButton disabled={!kitName.trim() || cart.length === 0} className="h-10 px-6">
-            Create Kit
-          </SubmitButton>
-        </form>
-      </div>
-
       {/* Product Detail Modal */}
       {selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -498,7 +548,7 @@ export function KitBuilderForm({
             <div className="p-5 space-y-5">
               {/* Product info */}
               <div className="flex gap-4">
-                <div className="h-20 w-20 shrink-0 bg-gray-50 rounded-lg flex items-center justify-center overflow-hidden border border-gray-200">
+                <div className="h-20 w-20 shrink-0 bg-white rounded-lg flex items-center justify-center overflow-hidden border border-gray-200 p-2">
                   {selectedProduct.imageUrl ? (
                     <img
                       src={selectedProduct.imageUrl}

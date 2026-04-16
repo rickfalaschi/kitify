@@ -48,7 +48,7 @@ export default async function PayPage(props: {
     if (pi.status === "succeeded") {
       await db
         .update(orders)
-        .set({ status: "pending", updatedAt: new Date() })
+        .set({ status: "payment_confirmed", updatedAt: new Date() })
         .where(eq(orders.id, id));
 
       // Show success

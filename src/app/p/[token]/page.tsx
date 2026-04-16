@@ -51,7 +51,10 @@ export default async function PreOrderPage(props: {
 
   const { order, kit, company } = result[0];
 
-  if (order.status !== "incomplete") {
+  // Pre-orders start with status=pending. After submission the order moves to
+  // awaiting_payment (UK) or awaiting_shipping_quote (international), so any
+  // non-pending status means the employee has already submitted.
+  if (order.status !== "pending") {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
         <div className="max-w-md w-full text-center">
@@ -227,11 +230,12 @@ export default async function PreOrderPage(props: {
       return;
     }
 
-    // Re-fetch order to confirm still incomplete
+    // Re-fetch order to confirm it is still a pending pre-order awaiting the
+    // employee's submission.
     const [currentOrder] = await db
       .select()
       .from(orders)
-      .where(and(eq(orders.publicToken, token), eq(orders.status, "incomplete")))
+      .where(and(eq(orders.publicToken, token), eq(orders.status, "pending")))
       .limit(1);
 
     if (!currentOrder) return;
@@ -420,6 +424,7 @@ export default async function PreOrderPage(props: {
       updateValues.shippingCost = shippingCost;
       updateValues.totalAmount = totalWithShipping;
     } else {
+      // International: needs admin shipping quote before the payment link is released.
       updateValues.status = "awaiting_shipping_quote";
       updateValues.totalAmount = total.toString();
     }

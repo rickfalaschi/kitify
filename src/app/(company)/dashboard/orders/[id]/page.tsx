@@ -13,13 +13,13 @@ import Link from "next/link";
 import { getCompany } from "../../_lib/get-company";
 
 const statusConfig = {
-  pending: { label: "Pending", className: "bg-yellow-100 text-yellow-700" },
-  processing: { label: "Processing", className: "bg-blue-100 text-blue-700" },
-  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
-  delivered: { label: "Delivered", className: "bg-green-100 text-green-700" },
-  incomplete: { label: "Incomplete", className: "bg-orange-100 text-orange-700" },
-  awaiting_payment: { label: "Awaiting Payment", className: "bg-amber-100 text-amber-700" },
+  pending: { label: "Pending", className: "bg-orange-100 text-orange-700" },
   awaiting_shipping_quote: { label: "Awaiting Shipping Quote", className: "bg-purple-100 text-purple-700" },
+  awaiting_payment: { label: "Awaiting Payment", className: "bg-amber-100 text-amber-700" },
+  payment_confirmed: { label: "Payment Confirmed", className: "bg-yellow-100 text-yellow-700" },
+  in_production: { label: "In Production", className: "bg-blue-100 text-blue-700" },
+  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
+  completed: { label: "Completed", className: "bg-green-100 text-green-700" },
   cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
 } as const;
 
@@ -112,7 +112,8 @@ export default async function PedidoDetailPage(props: {
 
       {order.status === "awaiting_shipping_quote" && (
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 text-sm text-purple-700">
-          This order is awaiting a shipping quote from our team. You will be able to pay once the shipping cost is confirmed.
+          This order is awaiting a shipping quote from our team. You will be
+          able to pay once the shipping cost is confirmed.
         </div>
       )}
 
@@ -209,13 +210,15 @@ export default async function PedidoDetailPage(props: {
         </div>
       </div>
 
-      {order.status === "incomplete" && order.publicToken && (
+      {order.status === "pending" && order.publicToken && (
         <div className="bg-white rounded-lg border border-gray-200">
           <div className="p-6 pb-4">
             <h3 className="text-lg font-semibold text-gray-900">Public Link</h3>
           </div>
           <div className="p-6 pt-0 text-sm">
-            <p className="text-gray-500 mb-1">Share this link to complete the order:</p>
+            <p className="text-gray-500 mb-1">
+              Share this link to complete the order:
+            </p>
             <code className="block bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-gray-800 break-all">
               {`${process.env.AUTH_URL || "http://localhost:3000"}/p/${order.publicToken}`}
             </code>

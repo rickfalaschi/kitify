@@ -9,7 +9,6 @@ import {
   Image,
   ArrowRight,
   Plus,
-  BookOpen,
 } from "lucide-react";
 
 export default async function EmpresaDashboard() {
@@ -60,13 +59,6 @@ export default async function EmpresaDashboard() {
       description: "Build a new branded product kit",
       icon: Plus,
       href: "/dashboard/kits/new",
-      accent: "group-hover:bg-red-600 group-hover:text-white bg-red-50 text-red-600",
-    },
-    {
-      title: "Browse catalog",
-      description: "Explore available products",
-      icon: BookOpen,
-      href: "/dashboard/catalog",
       accent: "group-hover:bg-red-600 group-hover:text-white bg-red-50 text-red-600",
     },
     {

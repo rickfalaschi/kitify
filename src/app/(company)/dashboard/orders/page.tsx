@@ -12,13 +12,13 @@ import { StatusFilterSelect } from "@/components/status-filter-select";
 const ITEMS_PER_PAGE = 20;
 
 const statusConfig = {
-  pending: { label: "Pending", className: "bg-yellow-100 text-yellow-700" },
-  processing: { label: "Processing", className: "bg-blue-100 text-blue-700" },
-  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
-  delivered: { label: "Delivered", className: "bg-green-100 text-green-700" },
-  incomplete: { label: "Incomplete", className: "bg-orange-100 text-orange-700" },
+  pending: { label: "Pending", className: "bg-orange-100 text-orange-700" },
+  awaiting_shipping_quote: { label: "Awaiting Shipping Quote", className: "bg-purple-100 text-purple-700" },
   awaiting_payment: { label: "Awaiting Payment", className: "bg-amber-100 text-amber-700" },
-  awaiting_shipping_quote: { label: "Awaiting Quote", className: "bg-purple-100 text-purple-700" },
+  payment_confirmed: { label: "Payment Confirmed", className: "bg-yellow-100 text-yellow-700" },
+  in_production: { label: "In Production", className: "bg-blue-100 text-blue-700" },
+  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
+  completed: { label: "Completed", className: "bg-green-100 text-green-700" },
   cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
 } as const;
 
@@ -28,13 +28,13 @@ const deliveryLabels = {
 } as const;
 
 const allStatuses = [
-  "incomplete",
+  "pending",
   "awaiting_shipping_quote",
   "awaiting_payment",
-  "pending",
-  "processing",
+  "payment_confirmed",
+  "in_production",
   "shipped",
-  "delivered",
+  "completed",
   "cancelled",
 ] as const;
 
@@ -49,7 +49,7 @@ async function cancelOrder(formData: FormData) {
     .where(eq(orders.id, orderId))
     .limit(1);
   if (!order || order.companyId !== company.id) return;
-  if (order.status === "shipped" || order.status === "delivered" || order.status === "cancelled") return;
+  if (order.status === "shipped" || order.status === "completed" || order.status === "cancelled") return;
   await db
     .update(orders)
     .set({ status: "cancelled", updatedAt: new Date() })
@@ -154,7 +154,7 @@ export default async function PedidosPage(props: {
                         {order.status === "awaiting_payment" && (
                           <a href={`/dashboard/orders/${order.id}/pay`} className="ml-2 text-xs text-amber-700 underline font-medium hover:text-amber-900">Pay Now</a>
                         )}
-                        {order.status === "incomplete" && order.publicToken && (
+                        {order.status === "pending" && order.publicToken && (
                           <Link
                             href={`/dashboard/orders/pre-order/${order.id}`}
                             className="ml-2 text-xs text-orange-600 hover:text-orange-800 underline"
@@ -171,7 +171,7 @@ export default async function PedidosPage(props: {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex justify-end">
-                          {!["shipped", "delivered", "cancelled"].includes(order.status) && (
+                          {!["shipped", "completed", "cancelled"].includes(order.status) && (
                             <ConfirmForm action={cancelOrder} message="Are you sure you want to cancel this order?">
                               <input type="hidden" name="orderId" value={order.id} />
                               <SubmitButton

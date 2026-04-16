@@ -93,7 +93,7 @@ export default function ForgotPasswordPage() {
                 <Package className="h-4 w-4 text-white" />
               </span>
               <span className="text-lg font-bold tracking-tight text-gray-900">
-                Kits
+                Kitify
               </span>
             </Link>
             <h2 className="mt-6 text-2xl font-bold text-gray-900">

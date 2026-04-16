@@ -7,9 +7,10 @@ import {
   kitItemVariationOptions,
   companyProductMockups,
   products,
+  productImages,
   productVariations,
 } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, asc } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ShoppingCart } from "lucide-react";
 import { getCompany } from "../../_lib/get-company";
@@ -34,7 +35,7 @@ export default async function KitDetailPage(props: {
 
   if (!kit || kit.companyId !== company.id) notFound();
 
-  const items = await db
+  const itemsRaw = await db
     .select({
       kitItem: kitItems,
       product: products,
@@ -42,6 +43,35 @@ export default async function KitDetailPage(props: {
     .from(kitItems)
     .innerJoin(products, eq(products.id, kitItems.productId))
     .where(eq(kitItems.kitId, kit.id));
+
+  // Fetch cover image (lowest sortOrder) for each product in this kit
+  const productIds = itemsRaw.map((i) => i.product.id);
+  const coverImagesRaw =
+    productIds.length > 0
+      ? await db
+          .select({
+            productId: productImages.productId,
+            imageUrl: productImages.imageUrl,
+          })
+          .from(productImages)
+          .where(inArray(productImages.productId, productIds))
+          .orderBy(asc(productImages.sortOrder))
+      : [];
+  const coverImageByProduct = coverImagesRaw.reduce<Record<string, string>>(
+    (acc, row) => {
+      if (!acc[row.productId]) acc[row.productId] = row.imageUrl;
+      return acc;
+    },
+    {},
+  );
+
+  const items = itemsRaw.map((row) => ({
+    ...row,
+    product: {
+      ...row.product,
+      imageUrl: coverImageByProduct[row.product.id] ?? null,
+    },
+  }));
 
   const kitItemIds = items.map((i) => i.kitItem.id);
 
@@ -109,8 +139,8 @@ export default async function KitDetailPage(props: {
   }
 
   // Fetch per-product mockups for this company (with variationId)
-  const productIds = [...new Set(items.map((i) => i.product.id))];
-  const mockups = productIds.length > 0
+  const uniqueProductIds = [...new Set(items.map((i) => i.product.id))];
+  const mockups = uniqueProductIds.length > 0
     ? await db
         .select({
           id: companyProductMockups.id,
@@ -119,7 +149,7 @@ export default async function KitDetailPage(props: {
           imageUrl: companyProductMockups.imageUrl,
         })
         .from(companyProductMockups)
-        .where(and(eq(companyProductMockups.companyId, company.id), inArray(companyProductMockups.productId, productIds)))
+        .where(and(eq(companyProductMockups.companyId, company.id), inArray(companyProductMockups.productId, uniqueProductIds)))
     : [];
 
   // Key: productId (no color) or productId:variationId (with color)

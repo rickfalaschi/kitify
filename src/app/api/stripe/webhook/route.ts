@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
 
       await db
         .update(orders)
-        .set({ status: "pending", updatedAt: new Date() })
+        .set({ status: "payment_confirmed", updatedAt: new Date() })
         .where(eq(orders.id, order.id));
     }
   }

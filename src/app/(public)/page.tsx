@@ -27,7 +27,6 @@ export default function HomePage() {
         <Header />
         <Hero />
       </div>
-      <TrustBar />
       <Benefits />
       <HowItWorks />
       <KitShowcase />
@@ -208,31 +207,6 @@ function KitTile({
       <p className="mt-3 text-sm font-semibold text-white">{label}</p>
       <p className="text-xs text-gray-400">{sub}</p>
     </div>
-  );
-}
-
-/* ---------- Trust bar ---------- */
-
-function TrustBar() {
-  const logos = ["NORTHWIND", "ACME CO.", "GLOBEX", "INITECH", "UMBRELLA", "STARK"];
-  return (
-    <section className="border-y border-gray-100 bg-gray-50/50">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <p className="text-center text-xs font-semibold uppercase tracking-wider text-gray-500">
-          Trusted by people-first teams worldwide
-        </p>
-        <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 items-center">
-          {logos.map((name) => (
-            <div
-              key={name}
-              className="text-center text-sm font-bold tracking-widest text-gray-400"
-            >
-              {name}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
   );
 }
 
@@ -523,7 +497,7 @@ function UseCases() {
     },
   ];
   return (
-    <section id="use-cases" className="bg-gray-900 py-24">
+    <section id="use-cases" className="bg-[#0a0a23] py-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center max-w-2xl mx-auto">
           <span className="inline-block rounded-full bg-red-600/20 text-red-300 text-xs font-semibold uppercase tracking-wider px-3 py-1">

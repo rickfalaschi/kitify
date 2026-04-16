@@ -6,6 +6,7 @@ import {
   kitItemVariations,
   kitItemVariationOptions,
   products,
+  productImages,
   productVariations,
   companyAddresses,
   orders,
@@ -13,7 +14,7 @@ import {
   orderItemSelections,
   settings,
 } from "@/db/schema";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and, inArray, asc } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { ArrowLeft } from "lucide-react";
@@ -40,7 +41,7 @@ export default async function NovoPedidoPage(props: {
     notFound();
 
   // Fetch kit items with products
-  const items = await db
+  const itemsRaw = await db
     .select({
       kitItem: kitItems,
       product: products,
@@ -48,6 +49,35 @@ export default async function NovoPedidoPage(props: {
     .from(kitItems)
     .innerJoin(products, eq(products.id, kitItems.productId))
     .where(eq(kitItems.kitId, kit.id));
+
+  // Fetch cover image (lowest sortOrder) for each product in this kit
+  const productIds = itemsRaw.map((i) => i.product.id);
+  const coverImagesRaw =
+    productIds.length > 0
+      ? await db
+          .select({
+            productId: productImages.productId,
+            imageUrl: productImages.imageUrl,
+          })
+          .from(productImages)
+          .where(inArray(productImages.productId, productIds))
+          .orderBy(asc(productImages.sortOrder))
+      : [];
+  const coverImageByProduct = coverImagesRaw.reduce<Record<string, string>>(
+    (acc, row) => {
+      if (!acc[row.productId]) acc[row.productId] = row.imageUrl;
+      return acc;
+    },
+    {},
+  );
+
+  const items = itemsRaw.map((row) => ({
+    ...row,
+    product: {
+      ...row.product,
+      imageUrl: coverImageByProduct[row.product.id] ?? null,
+    },
+  }));
 
   const kitItemIds = items.map((i) => i.kitItem.id);
 
@@ -200,7 +230,7 @@ export default async function NovoPedidoPage(props: {
     }
 
     // Re-fetch kit items WITH product data for snapshot
-    const currentItems = await db
+    const currentItemsRaw = await db
       .select({
         kitItem: kitItems,
         product: products,
@@ -208,6 +238,35 @@ export default async function NovoPedidoPage(props: {
       .from(kitItems)
       .innerJoin(products, eq(products.id, kitItems.productId))
       .where(eq(kitItems.kitId, kitIdValue));
+
+    // Fetch cover image per product so we can snapshot into order_items.product_image_url
+    const currentProductIds = currentItemsRaw.map((i) => i.product.id);
+    const currentCoverRaw =
+      currentProductIds.length > 0
+        ? await db
+            .select({
+              productId: productImages.productId,
+              imageUrl: productImages.imageUrl,
+            })
+            .from(productImages)
+            .where(inArray(productImages.productId, currentProductIds))
+            .orderBy(asc(productImages.sortOrder))
+        : [];
+    const currentCoverByProduct = currentCoverRaw.reduce<Record<string, string>>(
+      (acc, row) => {
+        if (!acc[row.productId]) acc[row.productId] = row.imageUrl;
+        return acc;
+      },
+      {},
+    );
+
+    const currentItems = currentItemsRaw.map((row) => ({
+      ...row,
+      product: {
+        ...row.product,
+        imageUrl: currentCoverByProduct[row.product.id] ?? null,
+      },
+    }));
 
     const currentItemIds = currentItems.map((i) => i.kitItem.id);
 
@@ -288,7 +347,7 @@ export default async function NovoPedidoPage(props: {
     };
 
     if (isPreorder) {
-      values.status = "incomplete";
+      values.status = "pending";
       values.publicToken = randomBytes(32).toString("hex");
     }
 
@@ -426,7 +485,7 @@ export default async function NovoPedidoPage(props: {
       revalidatePath("/dashboard/orders");
       redirect(`/dashboard/orders/${newOrder.id}/pay`);
     } else {
-      // International: needs admin shipping quote
+      // International: needs admin shipping quote before the payment link is released
       await db
         .update(orders)
         .set({

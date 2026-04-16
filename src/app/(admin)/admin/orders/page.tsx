@@ -20,12 +20,12 @@ async function updateOrderStatusAction(formData: FormData) {
   const orderId = formData.get("orderId") as string;
   const status = formData.get("status") as
     | "pending"
-    | "processing"
-    | "shipped"
-    | "delivered"
-    | "incomplete"
-    | "awaiting_payment"
     | "awaiting_shipping_quote"
+    | "awaiting_payment"
+    | "payment_confirmed"
+    | "in_production"
+    | "shipped"
+    | "completed"
     | "cancelled";
 
   await db
@@ -61,35 +61,35 @@ async function updateOrderStatusAction(formData: FormData) {
 }
 
 const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
-  processing: "bg-blue-100 text-blue-700",
-  shipped: "bg-indigo-100 text-indigo-700",
-  delivered: "bg-green-100 text-green-700",
-  incomplete: "bg-orange-100 text-orange-700",
-  awaiting_payment: "bg-amber-100 text-amber-700",
+  pending: "bg-orange-100 text-orange-700",
   awaiting_shipping_quote: "bg-purple-100 text-purple-700",
+  awaiting_payment: "bg-amber-100 text-amber-700",
+  payment_confirmed: "bg-yellow-100 text-yellow-700",
+  in_production: "bg-blue-100 text-blue-700",
+  shipped: "bg-indigo-100 text-indigo-700",
+  completed: "bg-green-100 text-green-700",
   cancelled: "bg-red-100 text-red-700",
 };
 
 const statusLabels: Record<string, string> = {
   pending: "Pending",
-  processing: "Processing",
-  shipped: "Shipped",
-  delivered: "Delivered",
-  incomplete: "Incomplete",
+  awaiting_shipping_quote: "Awaiting Shipping Quote",
   awaiting_payment: "Awaiting Payment",
-  awaiting_shipping_quote: "Awaiting Quote",
+  payment_confirmed: "Payment Confirmed",
+  in_production: "In Production",
+  shipped: "Shipped",
+  completed: "Completed",
   cancelled: "Cancelled",
 };
 
 const allStatuses = [
-  "incomplete",
+  "pending",
   "awaiting_shipping_quote",
   "awaiting_payment",
-  "pending",
-  "processing",
+  "payment_confirmed",
+  "in_production",
   "shipped",
-  "delivered",
+  "completed",
   "cancelled",
 ];
 
@@ -201,13 +201,13 @@ export default async function PedidosPage(props: {
                       defaultValue={order.status}
                       className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                     >
-                      <option value="incomplete">Incomplete</option>
                       <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="delivered">Delivered</option>
+                      <option value="awaiting_shipping_quote">Awaiting Shipping Quote</option>
                       <option value="awaiting_payment">Awaiting Payment</option>
-                      <option value="awaiting_shipping_quote">Awaiting Quote</option>
+                      <option value="payment_confirmed">Payment Confirmed</option>
+                      <option value="in_production">In Production</option>
+                      <option value="shipped">Shipped</option>
+                      <option value="completed">Completed</option>
                       <option value="cancelled">Cancelled</option>
                     </select>
                     <SubmitButton variant="secondary" className="text-xs h-8 px-3">Save</SubmitButton>

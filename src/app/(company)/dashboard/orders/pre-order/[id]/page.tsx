@@ -27,7 +27,8 @@ export default async function PreOrderPage(props: {
 
   if (!result) notFound();
   if (result.order.companyId !== company.id) notFound();
-  if (result.order.status !== "incomplete") notFound();
+  // Pre-order landing is only useful while the employee hasn't submitted yet.
+  if (result.order.status !== "pending") notFound();
 
   const publicUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/p/${result.order.publicToken}`;
 

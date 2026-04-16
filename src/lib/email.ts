@@ -119,12 +119,12 @@ export async function sendOrderStatusEmail({
 }) {
   const statusLabels: Record<string, string> = {
     pending: "Pending",
-    processing: "Processing",
-    shipped: "Shipped",
-    delivered: "Delivered",
-    incomplete: "Incomplete",
-    awaiting_payment: "Awaiting Payment",
     awaiting_shipping_quote: "Awaiting Shipping Quote",
+    awaiting_payment: "Awaiting Payment",
+    payment_confirmed: "Payment Confirmed",
+    in_production: "In Production",
+    shipped: "Shipped",
+    completed: "Completed",
     cancelled: "Cancelled",
   };
 

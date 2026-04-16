@@ -5,7 +5,6 @@ import { getCompany } from "./_lib/get-company";
 const fullNavItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
   { title: "Logos", href: "/dashboard/logos", icon: "Image" },
-  { title: "Catalog", href: "/dashboard/catalog", icon: "BookOpen" },
   { title: "Kits", href: "/dashboard/kits", icon: "Package" },
   { title: "Orders", href: "/dashboard/orders", icon: "ShoppingCart" },
   { title: "Addresses", href: "/dashboard/addresses", icon: "MapPin" },
@@ -14,7 +13,6 @@ const fullNavItems: NavItem[] = [
 
 const limitedNavItems: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: "LayoutDashboard" },
-  { title: "Catalog", href: "/dashboard/catalog", icon: "BookOpen" },
   { title: "Kits", href: "/dashboard/kits", icon: "Package" },
   { title: "Orders", href: "/dashboard/orders", icon: "ShoppingCart" },
 ];

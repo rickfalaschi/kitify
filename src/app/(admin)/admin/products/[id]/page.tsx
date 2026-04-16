@@ -251,15 +251,7 @@ async function deleteProduct(
   }
   await db.delete(productImages).where(eq(productImages.productId, productId));
 
-  // 6) Delete the product itself (and legacy imageUrl if present)
-  const [productRow] = await db
-    .select({ imageUrl: products.imageUrl })
-    .from(products)
-    .where(eq(products.id, productId))
-    .limit(1);
-  if (productRow?.imageUrl) {
-    await deleteFile(extractKey(productRow.imageUrl));
-  }
+  // 6) Delete the product itself
   await db.delete(products).where(eq(products.id, productId));
 
   revalidatePath("/admin/products");

@@ -5,13 +5,13 @@ import { users } from "./users";
 import { companyAddresses } from "./company-addresses";
 
 export const orderStatusEnum = pgEnum("order_status", [
-  "incomplete",
+  "pending",
   "awaiting_shipping_quote",
   "awaiting_payment",
-  "pending",
-  "processing",
+  "payment_confirmed",
+  "in_production",
   "shipped",
-  "delivered",
+  "completed",
   "cancelled",
 ]);
 
