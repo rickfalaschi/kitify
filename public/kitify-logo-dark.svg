@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 427.96 158.24">
+<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 454.83 158.24">
   <defs>
     <style>
       .cls-1 {
@@ -13,20 +13,20 @@
   </defs>
   <g id="Camada_1-2" data-name="Camada 1">
     <g>
-      <rect class="cls-1" x="-8.23" y="95.98" width="76.65" height="12" rx="3" ry="3" transform="translate(80.93 8.58) rotate(45)"/>
-      <rect class="cls-1" x="-8.23" y="50.26" width="76.65" height="12" rx="3" ry="3" transform="translate(-30.97 37.76) rotate(-45)"/>
-      <rect class="cls-1" x="89.82" y="50.26" width="76.65" height="12" rx="3" ry="3" transform="translate(178.97 186.66) rotate(-135)"/>
-      <rect class="cls-1" x="89.82" y="95.98" width="76.65" height="12" rx="3" ry="3" transform="translate(290.86 83.48) rotate(135)"/>
-      <rect class="cls-1" x="73.12" y="1.24" width="12" height="12" rx="3" ry="3" transform="translate(129.95 68.31) rotate(-135)"/>
-      <rect class="cls-1" x="73.12" y="145" width="12" height="12" rx="3" ry="3" transform="translate(28.3 313.72) rotate(-135)"/>
+      <rect class="cls-1" x="-6.79" y="92.52" width="76.65" height="16.05" rx="3" ry="3" transform="translate(80.33 7.15) rotate(45)"/>
+      <rect class="cls-1" x="-6.79" y="49.67" width="76.65" height="16.05" rx="3" ry="3" transform="translate(-31.56 39.2) rotate(-45)"/>
+      <rect class="cls-1" x="88.38" y="49.67" width="76.65" height="16.05" rx="3" ry="3" transform="translate(175.51 188.09) rotate(-135)"/>
+      <rect class="cls-1" x="88.38" y="92.52" width="76.65" height="16.05" rx="3" ry="3" transform="translate(287.4 82.04) rotate(135)"/>
+      <rect class="cls-1" x="71.09" y="2.08" width="16.05" height="16.05" rx="3" ry="3" transform="translate(127.92 73.2) rotate(-135)"/>
+      <rect class="cls-1" x="71.09" y="140.1" width="16.05" height="16.05" rx="3" ry="3" transform="translate(30.32 308.82) rotate(-135)"/>
       <rect class="cls-1" x="59.3" y="59.3" width="39.65" height="39.65" rx="3" ry="3" transform="translate(79.12 191.01) rotate(-135)"/>
       <g>
-        <path class="cls-2" d="M214.74,82.77l-7.1,7.3v11.46h-8.32v-44.8h8.32v22.97l22.14-22.97h9.34l-18.81,20.03,19.97,24.77h-9.73l-15.81-18.75Z"/>
-        <path class="cls-2" d="M250.97,56.72h8.32v44.8h-8.32v-44.8Z"/>
-        <path class="cls-2" d="M285.47,63.76h-14.85v-7.04h38.01v7.04h-14.85v37.76h-8.32v-37.76Z"/>
-        <path class="cls-2" d="M319.91,56.72h8.32v44.8h-8.32v-44.8Z"/>
-        <path class="cls-2" d="M353.65,63.7v13.63h21.63v7.04h-21.63v17.15h-8.32v-44.8h32.7v6.98h-24.38Z"/>
-        <path class="cls-2" d="M410.42,85.71v15.81h-8.32v-15.68l-17.6-29.12h8.9l13.12,21.82,13.25-21.82h8.19l-17.54,28.99Z"/>
+        <path class="cls-2" d="M216.55,83.2l-7.94,8.15v12.8h-9.3v-50.06h9.3v25.67l24.75-25.67h10.44l-21.03,22.38,22.31,27.68h-10.87l-17.66-20.95Z"/>
+        <path class="cls-2" d="M257.04,54.09h9.3v50.06h-9.3v-50.06Z"/>
+        <path class="cls-2" d="M295.6,61.96h-16.59v-7.87h42.48v7.87h-16.59v42.19h-9.3v-42.19Z"/>
+        <path class="cls-2" d="M334.09,54.09h9.3v50.06h-9.3v-50.06Z"/>
+        <path class="cls-2" d="M371.79,61.88v15.23h24.17v7.87h-24.17v19.17h-9.3v-50.06h36.54v7.8h-27.25Z"/>
+        <path class="cls-2" d="M435.23,86.49v17.66h-9.3v-17.52l-19.67-32.54h9.94l14.66,24.39,14.8-24.39h9.15l-19.6,32.4Z"/>
       </g>
     </g>
   </g>
