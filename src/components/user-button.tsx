@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import { LogOut, Settings, ChevronsUpDown } from "lucide-react";
 import Link from "next/link";
 
-export function UserButton() {
+export function UserButton({
+  profileHref = "/dashboard/profile",
+}: {
+  profileHref?: string;
+} = {}) {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +57,7 @@ export function UserButton() {
       {open && (
         <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-white/10 bg-[#12123a] py-1 shadow-xl z-50">
           <Link
-            href="/dashboard/profile"
+            href={profileHref}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/[0.06] hover:text-white transition-colors"
             onClick={() => setOpen(false)}
           >

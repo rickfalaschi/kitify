@@ -31,7 +31,11 @@ export default async function AdminLayout({
 
   return (
     <div className="flex min-h-screen bg-gray-50/80">
-      <AppSidebar title="Kitify Admin" items={navItems} />
+      <AppSidebar
+        title="Kitify Admin"
+        items={navItems}
+        profileHref="/admin/profile"
+      />
       <main className="flex-1 p-8">{children}</main>
     </div>
   );

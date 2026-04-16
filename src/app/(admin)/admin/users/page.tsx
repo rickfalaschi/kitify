@@ -21,6 +21,10 @@ const ADMIN_FILTER_OPTIONS = [
 export default async function AdminUsersPage(props: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
+  const session = await auth();
+  if (!session || !session.user.isAdmin) redirect("/login");
+  const currentUserId = session.user.id;
+
   const { q, status: filter } = await props.searchParams;
   const query = q?.trim();
   const isValidFilter =
@@ -152,40 +156,46 @@ export default async function AdminUsersPage(props: {
                   {companiesByUser[user.id]?.join(", ") || "—"}
                 </td>
                 <td className="py-3 px-4">
-                  <form action={toggleAdmin} className="inline">
-                    <input type="hidden" name="userId" value={user.id} />
-                    <input
-                      type="hidden"
-                      name="makeAdmin"
-                      value={user.isAdmin ? "false" : "true"}
-                    />
-                    <SubmitButton
-                      variant="secondary"
-                      className={`text-xs h-8 px-3 ${
-                        user.isAdmin
-                          ? "bg-gray-900 text-white hover:bg-gray-800"
-                          : ""
-                      }`}
-                    >
-                      {user.isAdmin ? "Admin — revoke" : "Make admin"}
-                    </SubmitButton>
-                  </form>
+                  {user.id === currentUserId ? (
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+                      You (admin)
+                    </span>
+                  ) : (
+                    <form action={toggleAdmin} className="inline">
+                      <input type="hidden" name="userId" value={user.id} />
+                      <input
+                        type="hidden"
+                        name="makeAdmin"
+                        value={user.isAdmin ? "false" : "true"}
+                      />
+                      <SubmitButton
+                        variant={user.isAdmin ? "primary" : "secondary"}
+                        className="text-xs h-8 px-3"
+                      >
+                        {user.isAdmin ? "Admin — revoke" : "Make admin"}
+                      </SubmitButton>
+                    </form>
+                  )}
                 </td>
                 <td className="py-3 px-4">
-                  <ConfirmForm
-                    action={deleteUser}
-                    message="Are you sure you want to delete this user?"
-                    className="flex justify-end"
-                  >
-                    <input type="hidden" name="userId" value={user.id} />
-                    <SubmitButton
-                      variant="secondary"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-8 px-2"
+                  {user.id === currentUserId ? (
+                    <div className="flex justify-end" />
+                  ) : (
+                    <ConfirmForm
+                      action={deleteUser}
+                      message="Are you sure you want to delete this user?"
+                      className="flex justify-end"
                     >
-                      <Trash2 className="mr-1 h-3.5 w-3.5" />
-                      Delete
-                    </SubmitButton>
-                  </ConfirmForm>
+                      <input type="hidden" name="userId" value={user.id} />
+                      <SubmitButton
+                        variant="secondary"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-8 px-2"
+                      >
+                        <Trash2 className="mr-1 h-3.5 w-3.5" />
+                        Delete
+                      </SubmitButton>
+                    </ConfirmForm>
+                  )}
                 </td>
               </tr>
             ))}

@@ -45,9 +45,10 @@ interface AppSidebarProps {
   title: string;
   items: NavItem[];
   topSlot?: React.ReactNode;
+  profileHref?: string;
 }
 
-export function AppSidebar({ title, items, topSlot }: AppSidebarProps) {
+export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -135,7 +136,7 @@ export function AppSidebar({ title, items, topSlot }: AppSidebarProps) {
           </ul>
         </nav>
         <div className="relative border-t border-white/10 p-3 overflow-visible">
-          <UserButton />
+          <UserButton profileHref={profileHref} />
         </div>
       </div>
     </aside>
