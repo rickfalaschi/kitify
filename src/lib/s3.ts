@@ -1,15 +1,7 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 
-function normalizeEndpoint(raw: string): string {
-  const trimmed = raw.trim().replace(/\/+$/, "");
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
-  return `https://${trimmed}`;
-}
-
-const endpoint = normalizeEndpoint(process.env.B2_ENDPOINT!);
-
 export const s3 = new S3Client({
-  endpoint,
+  endpoint: process.env.B2_ENDPOINT!,
   region: process.env.B2_REGION!,
   credentials: {
     accessKeyId: process.env.B2_KEY_ID!,
@@ -31,7 +23,7 @@ export async function uploadFile(
     }),
   );
 
-  return `${endpoint}/${process.env.B2_BUCKET!}/${key}`;
+  return `${process.env.B2_ENDPOINT!}/${process.env.B2_BUCKET!}/${key}`;
 }
 
 export async function deleteFile(key: string): Promise<void> {

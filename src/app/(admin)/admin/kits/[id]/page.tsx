@@ -207,11 +207,9 @@ export default async function AdminKitDetailPage(props: {
 
     const [mockup] = await db.select().from(companyProductMockups).where(eq(companyProductMockups.id, mockupId)).limit(1);
     if (mockup) {
-      const bucketMarker = `/${process.env.B2_BUCKET}/`;
-      const idx = mockup.imageUrl.indexOf(bucketMarker);
-      if (idx >= 0) {
-        const key = mockup.imageUrl.slice(idx + bucketMarker.length);
-        try { await deleteFile(key); } catch {}
+      const bucketPrefix = `${process.env.B2_ENDPOINT}/${process.env.B2_BUCKET}/`;
+      if (mockup.imageUrl.startsWith(bucketPrefix)) {
+        try { await deleteFile(mockup.imageUrl.slice(bucketPrefix.length)); } catch {}
       }
       await db.delete(companyProductMockups).where(eq(companyProductMockups.id, mockupId));
     }
