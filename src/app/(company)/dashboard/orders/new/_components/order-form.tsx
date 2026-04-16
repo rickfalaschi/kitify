@@ -63,7 +63,7 @@ export function OrderForm({
 
   const [selections, setSelections] = useState<Selections>(initialSelections);
   const [deliveryType, setDeliveryType] = useState<string>("company_address");
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -92,10 +92,6 @@ export function OrderForm({
       },
     }));
   }
-
-  const hasEditableVariations = items.some((item) =>
-    item.variations.some((v) => v.mode === "editable")
-  );
 
   return (
     <form action={handleSubmit} className="space-y-6">

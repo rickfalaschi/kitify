@@ -52,7 +52,7 @@ async function cancelOrder(formData: FormData) {
   revalidatePath("/dashboard/orders");
 }
 
-export default async function PedidosPage(props: {
+export default async function OrdersPage(props: {
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const { company } = await getCompany();

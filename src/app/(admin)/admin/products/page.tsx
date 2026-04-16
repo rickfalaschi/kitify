@@ -5,7 +5,7 @@ import { eq, inArray } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { CategoryFilterSelect } from "@/components/category-filter-select";
 
-export default async function ProdutosPage(props: {
+export default async function ProductsPage(props: {
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category: filterCategoryId } = await props.searchParams;

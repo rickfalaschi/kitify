@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, Trash2, ImageIcon, Check } from "lucide-react";
+import { Upload, Trash2, Check } from "lucide-react";
 
 type MockupData = { id: string; imageUrl: string } | null;
 

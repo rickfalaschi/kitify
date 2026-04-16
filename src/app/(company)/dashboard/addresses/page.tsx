@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireFullAccess } from "../_lib/get-company";
 import { AddressesView } from "./_components/addresses-view";
 
-export default async function EnderecosPage() {
+export default async function AddressesPage() {
   const { company } = await requireFullAccess();
 
   const addresses = await db

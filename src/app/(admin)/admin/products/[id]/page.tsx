@@ -20,7 +20,7 @@ import { auth } from "@/lib/auth";
 
 async function requireAdmin() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 }
 
 function revalidate(id: string) {

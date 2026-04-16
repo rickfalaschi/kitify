@@ -174,7 +174,7 @@ export default async function AdminKitDetailPage(props: {
   async function uploadMockup(formData: FormData) {
     "use server";
     const session = await auth();
-    if (!session || session.user.role !== "admin") redirect("/login");
+    if (!session || !session.user.isAdmin) redirect("/login");
     const productId = formData.get("productId") as string;
     const companyId = formData.get("companyId") as string;
     const variationId = formData.get("variationId") as string | null;
@@ -200,7 +200,7 @@ export default async function AdminKitDetailPage(props: {
   async function deleteMockup(formData: FormData) {
     "use server";
     const session = await auth();
-    if (!session || session.user.role !== "admin") redirect("/login");
+    if (!session || !session.user.isAdmin) redirect("/login");
     const mockupId = formData.get("mockupId") as string;
     const kitId = formData.get("kitId") as string;
     if (!mockupId) return;
@@ -220,7 +220,7 @@ export default async function AdminKitDetailPage(props: {
   async function updateKitStatus(formData: FormData) {
     "use server";
     const session = await auth();
-    if (!session || session.user.role !== "admin") redirect("/login");
+    if (!session || !session.user.isAdmin) redirect("/login");
     const kitId = formData.get("kitId") as string;
     const newStatus = formData.get("status") as "pending" | "active" | "inactive";
     if (!kitId || !newStatus) return;

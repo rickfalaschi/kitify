@@ -40,14 +40,15 @@ export async function loginAction(
     return { error: "Incorrect email or password" };
   }
 
-  // Check user role and redirect accordingly
+  // Admins land on /admin; everyone else lands on /dashboard. An admin who
+  // is also a company member can switch between the two from the UI.
   const [user] = await db
     .select()
     .from(users)
     .where(eq(users.email, parsed.data.email))
     .limit(1);
 
-  if (user?.role === "admin") {
+  if (user?.isAdmin) {
     redirect("/admin");
   }
 
@@ -92,14 +93,14 @@ export async function registerAction(
     })
     .returning();
 
-  // Create user
+  // Create user. isAdmin defaults to false at the schema level; admins are
+  // promoted manually from /admin/users.
   const [user] = await db
     .insert(users)
     .values({
       name: parsed.data.userName,
       email: parsed.data.email,
       passwordHash,
-      role: "company",
     })
     .returning();
 

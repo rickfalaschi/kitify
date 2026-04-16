@@ -4,7 +4,7 @@ import { companies } from "@/db/schema";
 import { ilike, asc } from "drizzle-orm";
 import { SearchFilterInput } from "@/components/search-filter-input";
 
-export default async function EmpresasPage(props: {
+export default async function CompaniesPage(props: {
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await props.searchParams;

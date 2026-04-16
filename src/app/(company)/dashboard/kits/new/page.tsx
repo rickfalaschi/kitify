@@ -35,7 +35,7 @@ type KitItemInput = {
   };
 };
 
-export default async function NovoKitPage() {
+export default async function NewKitPage() {
   const allProductsRaw = await db
     .select()
     .from(products)

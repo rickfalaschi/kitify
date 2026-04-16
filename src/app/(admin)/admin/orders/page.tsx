@@ -22,7 +22,7 @@ const ITEMS_PER_PAGE = 20;
 async function updateOrderStatusAction(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const orderId = formData.get("orderId") as string;
   const status = formData.get("status") as
@@ -87,7 +87,7 @@ const statusColors = ORDER_STATUS_COLORS;
 const statusLabels = ORDER_STATUS_LABELS;
 const allStatuses = ALL_ORDER_STATUSES;
 
-export default async function PedidosPage(props: {
+export default async function OrdersPage(props: {
   searchParams: Promise<{ status?: string; page?: string }>;
 }) {
   const { status: filterStatus, page: pageParam } = await props.searchParams;

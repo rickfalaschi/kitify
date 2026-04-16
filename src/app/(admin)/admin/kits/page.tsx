@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { kits, companies, kitItems } from "@/db/schema";
-import { eq, count, and, or, ilike, desc, sql } from "drizzle-orm";
+import { eq, and, or, ilike, desc, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { SearchFilterInput } from "@/components/search-filter-input";
 import { StatusFilterSelect } from "@/components/status-filter-select";

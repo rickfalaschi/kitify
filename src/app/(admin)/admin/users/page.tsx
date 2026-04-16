@@ -7,22 +7,24 @@ import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
-import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import { Trash2 } from "lucide-react";
 import { SearchFilterInput } from "@/components/search-filter-input";
 import { StatusFilterSelect } from "@/components/status-filter-select";
 
-const ROLE_OPTIONS = [
-  { value: "admin", label: "Admin" },
-  { value: "company", label: "Company" },
+// Admin-ness is a boolean, not a role enum. Users can be admin, company
+// member (of one or more companies), or both.
+const ADMIN_FILTER_OPTIONS = [
+  { value: "admin", label: "Admins" },
+  { value: "non_admin", label: "Non-admins" },
 ];
 
 export default async function AdminUsersPage(props: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
-  const { q, status: roleParam } = await props.searchParams;
+  const { q, status: filter } = await props.searchParams;
   const query = q?.trim();
-  const isValidRole = roleParam && ROLE_OPTIONS.some((o) => o.value === roleParam);
+  const isValidFilter =
+    filter && ADMIN_FILTER_OPTIONS.some((o) => o.value === filter);
 
   const conditions: SQL[] = [];
   if (query) {
@@ -30,10 +32,8 @@ export default async function AdminUsersPage(props: {
     const or_ = or(ilike(users.name, pattern), ilike(users.email, pattern));
     if (or_) conditions.push(or_);
   }
-  if (isValidRole) {
-    conditions.push(
-      eq(users.role, roleParam as typeof users.role.enumValues[number]),
-    );
+  if (isValidFilter) {
+    conditions.push(eq(users.isAdmin, filter === "admin"));
   }
   const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -42,7 +42,7 @@ export default async function AdminUsersPage(props: {
       id: users.id,
       name: users.name,
       email: users.email,
-      role: users.role,
+      isAdmin: users.isAdmin,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -64,16 +64,19 @@ export default async function AdminUsersPage(props: {
     companiesByUser[a.userId].push(a.companyName);
   }
 
-  async function updateRole(formData: FormData) {
+  async function toggleAdmin(formData: FormData) {
     "use server";
     const session = await auth();
-    if (!session || session.user.role !== "admin") redirect("/login");
+    if (!session || !session.user.isAdmin) redirect("/login");
     const userId = formData.get("userId") as string;
-    const role = formData.get("role") as "admin" | "company";
-    if (!userId || !role) return;
+    const makeAdmin = formData.get("makeAdmin") === "true";
+    if (!userId) return;
+    // Prevent an admin from demoting themselves — avoids locking everyone
+    // out of /admin by accident.
+    if (userId === session.user.id && !makeAdmin) return;
     await db
       .update(users)
-      .set({ role, updatedAt: new Date() })
+      .set({ isAdmin: makeAdmin, updatedAt: new Date() })
       .where(eq(users.id, userId));
     revalidatePath("/admin/users");
   }
@@ -81,9 +84,10 @@ export default async function AdminUsersPage(props: {
   async function deleteUser(formData: FormData) {
     "use server";
     const session = await auth();
-    if (!session || session.user.role !== "admin") redirect("/login");
+    if (!session || !session.user.isAdmin) redirect("/login");
     const userId = formData.get("userId") as string;
     if (!userId) return;
+    if (userId === session.user.id) return;
     await db.delete(companyUsers).where(eq(companyUsers.userId, userId));
     await db.delete(users).where(eq(users.id, userId));
     revalidatePath("/admin/users");
@@ -101,12 +105,12 @@ export default async function AdminUsersPage(props: {
           basePath="/admin/users"
           currentQuery={query}
           placeholder="Search by name or email..."
-          extraParams={{ status: isValidRole ? roleParam : undefined }}
+          extraParams={{ status: isValidFilter ? filter : undefined }}
         />
         <StatusFilterSelect
           basePath="/admin/users"
-          currentStatus={isValidRole ? roleParam : undefined}
-          options={ROLE_OPTIONS}
+          currentStatus={isValidFilter ? filter : undefined}
+          options={ADMIN_FILTER_OPTIONS}
         />
         <span className="text-sm text-gray-500">
           {allUsers.length} {allUsers.length === 1 ? "user" : "users"}
@@ -124,10 +128,10 @@ export default async function AdminUsersPage(props: {
                 Email
               </th>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">
-                Company
+                Companies
               </th>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">
-                Role
+                Admin
               </th>
               <th className="text-right py-3 px-4 text-gray-500 font-medium">
                 Actions
@@ -148,20 +152,31 @@ export default async function AdminUsersPage(props: {
                   {companiesByUser[user.id]?.join(", ") || "—"}
                 </td>
                 <td className="py-3 px-4">
-                  <form action={updateRole} className="inline">
+                  <form action={toggleAdmin} className="inline">
                     <input type="hidden" name="userId" value={user.id} />
-                    <AutoSubmitSelect
-                      name="role"
-                      defaultValue={user.role}
-                      className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    <input
+                      type="hidden"
+                      name="makeAdmin"
+                      value={user.isAdmin ? "false" : "true"}
+                    />
+                    <SubmitButton
+                      variant="secondary"
+                      className={`text-xs h-8 px-3 ${
+                        user.isAdmin
+                          ? "bg-gray-900 text-white hover:bg-gray-800"
+                          : ""
+                      }`}
                     >
-                      <option value="admin">Admin</option>
-                      <option value="company">Company</option>
-                    </AutoSubmitSelect>
+                      {user.isAdmin ? "Admin — revoke" : "Make admin"}
+                    </SubmitButton>
                   </form>
                 </td>
                 <td className="py-3 px-4">
-                  <ConfirmForm action={deleteUser} message="Are you sure you want to delete this user?" className="flex justify-end">
+                  <ConfirmForm
+                    action={deleteUser}
+                    message="Are you sure you want to delete this user?"
+                    className="flex justify-end"
+                  >
                     <input type="hidden" name="userId" value={user.id} />
                     <SubmitButton
                       variant="secondary"
@@ -177,7 +192,7 @@ export default async function AdminUsersPage(props: {
             {allUsers.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-center text-gray-500 py-8">
-                  {query || isValidRole
+                  {query || isValidFilter
                     ? "No users match your filters."
                     : "No users registered."}
                 </td>

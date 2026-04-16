@@ -10,7 +10,7 @@ async function updateSettings(formData: FormData) {
   "use server";
 
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  if (!session || !session.user.isAdmin) {
     redirect("/login");
   }
 
@@ -36,7 +36,7 @@ async function updateSettings(formData: FormData) {
 
 export default async function SettingsPage() {
   const session = await auth();
-  if (!session || session.user.role !== "admin") {
+  if (!session || !session.user.isAdmin) {
     redirect("/login");
   }
 

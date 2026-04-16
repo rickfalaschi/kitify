@@ -11,7 +11,7 @@ import {
   Plus,
 } from "lucide-react";
 
-export default async function EmpresaDashboard() {
+export default async function CompanyDashboard() {
   const { company } = await getCompany();
 
   const [[activeKits], [totalOrders], [totalLogos]] = await Promise.all([

@@ -14,7 +14,7 @@ import {
   orderItemSelections,
   settings,
 } from "@/db/schema";
-import { eq, and, inArray, asc } from "drizzle-orm";
+import { eq, inArray, asc } from "drizzle-orm";
 import { redirect, notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { ArrowLeft } from "lucide-react";
@@ -25,11 +25,11 @@ import { OrderForm } from "./_components/order-form";
 import { recordOrderStatusChange } from "@/lib/record-order-status-change";
 import { sendShippingQuoteRequestEmail } from "@/lib/email";
 
-export default async function NovoPedidoPage(props: {
+export default async function NewOrderPage(props: {
   searchParams: Promise<{ kitId?: string }>;
 }) {
   const { kitId } = await props.searchParams;
-  const { company, userId } = await getCompany();
+  const { company } = await getCompany();
 
   if (!kitId) redirect("/dashboard/kits");
 

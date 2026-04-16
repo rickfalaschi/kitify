@@ -44,9 +44,10 @@ export interface NavItem {
 interface AppSidebarProps {
   title: string;
   items: NavItem[];
+  topSlot?: React.ReactNode;
 }
 
-export function AppSidebar({ title, items }: AppSidebarProps) {
+export function AppSidebar({ title, items, topSlot }: AppSidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -75,6 +76,7 @@ export function AppSidebar({ title, items }: AppSidebarProps) {
             )}
           </Link>
         </div>
+        {topSlot}
         <nav className="flex-1 overflow-y-auto py-5">
           <p className="px-6 pb-3 text-[11px] font-semibold uppercase tracking-widest text-gray-500">
             Menu

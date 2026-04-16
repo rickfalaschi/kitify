@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { categories, productCategories, products } from "@/db/schema";
+import { categories, productCategories } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { Trash2, Plus } from "lucide-react";
 async function createCategory(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const name = (formData.get("name") as string)?.trim();
   if (!name) return;
@@ -23,7 +23,7 @@ async function createCategory(formData: FormData) {
 async function deleteCategory(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const categoryId = formData.get("categoryId") as string;
   if (!categoryId) return;

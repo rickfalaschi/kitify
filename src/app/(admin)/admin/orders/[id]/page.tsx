@@ -30,7 +30,7 @@ import { recordOrderStatusChange } from "@/lib/record-order-status-change";
 async function updateOrderStatusAction(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const orderId = formData.get("orderId") as string;
   const status = formData.get("status") as
@@ -95,7 +95,7 @@ async function updateOrderStatusAction(formData: FormData) {
 async function setShippingCostAction(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const orderId = formData.get("orderId") as string;
   const shippingCost = formData.get("shippingCost") as string;
@@ -142,7 +142,7 @@ async function setShippingCostAction(formData: FormData) {
 async function cancelOrderAction(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const orderId = formData.get("orderId") as string;
 
@@ -205,7 +205,7 @@ async function cancelOrderAction(formData: FormData) {
 const statusColors = ORDER_STATUS_COLORS;
 const statusLabels = ORDER_STATUS_LABELS;
 
-export default async function PedidoDetailPage(props: {
+export default async function OrderDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await props.params;

@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { registerAction, type AuthState } from "../_actions/auth";
 
-export default function CadastroPage() {
+export default function RegisterPage() {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(
     registerAction,
     {},

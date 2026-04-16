@@ -36,13 +36,15 @@ export async function proxy(request: Request) {
   const session = await auth();
 
   if (pathname.startsWith("/admin")) {
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session?.user || !session.user.isAdmin) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }
 
   if (pathname.startsWith("/dashboard")) {
-    if (!session?.user || session.user.role !== "company") {
+    // Any authenticated user can reach /dashboard. Whether they have any
+    // company memberships is enforced downstream in getCompany().
+    if (!session?.user) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
   }

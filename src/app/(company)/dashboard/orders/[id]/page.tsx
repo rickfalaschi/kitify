@@ -105,7 +105,7 @@ async function cancelOrderAction(formData: FormData) {
   revalidatePath("/dashboard/orders");
 }
 
-export default async function PedidoDetailPage(props: {
+export default async function OrderDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await props.params;

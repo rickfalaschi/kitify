@@ -7,19 +7,19 @@ import { users } from "@/db/schema";
 
 declare module "next-auth" {
   interface User {
-    role: "admin" | "company";
+    isAdmin: boolean;
   }
   interface Session {
     user: {
       id: string;
       name: string;
       email: string;
-      role: "admin" | "company";
+      isAdmin: boolean;
     };
   }
   interface JWT {
     id: string;
-    role: "admin" | "company";
+    isAdmin: boolean;
   }
 }
 
@@ -58,7 +58,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role,
+          isAdmin: user.isAdmin,
         };
       },
     }),
@@ -67,13 +67,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id!;
-        token.role = user.role;
+        token.isAdmin = user.isAdmin;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.id = token.id as string;
-      session.user.role = token.role as "admin" | "company";
+      session.user.isAdmin = Boolean(token.isAdmin);
       return session;
     },
   },

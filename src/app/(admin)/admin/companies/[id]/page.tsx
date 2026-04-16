@@ -18,7 +18,7 @@ import { auth } from "@/lib/auth";
 async function updateCompanyName(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
   const companyId = formData.get("companyId") as string;
   const name = (formData.get("name") as string)?.trim();
   if (!companyId || !name) return;
@@ -30,7 +30,7 @@ async function updateCompanyName(formData: FormData) {
   revalidatePath("/admin/companies");
 }
 
-export default async function EmpresaDetailPage(props: {
+export default async function CompanyDetailPage(props: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await props.params;
@@ -50,7 +50,8 @@ export default async function EmpresaDetailPage(props: {
       userId: companyUsers.userId,
       userName: users.name,
       userEmail: users.email,
-      userRole: users.role,
+      membershipRole: companyUsers.role,
+      isAdmin: users.isAdmin,
     })
     .from(companyUsers)
     .innerJoin(users, eq(companyUsers.userId, users.id))
@@ -149,15 +150,22 @@ export default async function EmpresaDetailPage(props: {
                         {u.userEmail}
                       </td>
                       <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                            u.userRole === "admin"
-                              ? "bg-gray-900 text-white"
-                              : "bg-gray-100 text-gray-700"
-                          }`}
-                        >
-                          {u.userRole === "admin" ? "Admin" : "Company"}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                              u.membershipRole === "full"
+                                ? "bg-gray-100 text-gray-700"
+                                : "bg-gray-50 text-gray-600"
+                            }`}
+                          >
+                            {u.membershipRole === "full" ? "Full access" : "Limited"}
+                          </span>
+                          {u.isAdmin && (
+                            <span className="inline-flex items-center rounded-full bg-gray-900 px-2 py-0.5 text-xs font-medium text-white">
+                              Admin
+                            </span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

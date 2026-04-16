@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 async function createProductAction(formData: FormData) {
   "use server";
   const session = await auth();
-  if (!session || session.user.role !== "admin") redirect("/login");
+  if (!session || !session.user.isAdmin) redirect("/login");
 
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;

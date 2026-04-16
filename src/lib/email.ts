@@ -105,6 +105,49 @@ export async function sendInviteEmail({
   });
 }
 
+export async function sendAddedToCompanyEmail({
+  to,
+  userName,
+  companyName,
+  loginUrl,
+}: {
+  to: string;
+  userName?: string;
+  companyName: string;
+  loginUrl: string;
+}) {
+  const greeting = userName ? `Hi ${esc(userName)}` : "Hi";
+
+  await transporter.sendMail({
+    from: `"Kitify" <${process.env.SMTP_USER}>`,
+    to,
+    subject: `You've been added to ${companyName} on Kitify`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2 style="color: #111;">${greeting},</h2>
+        <p style="color: #444; font-size: 16px; line-height: 1.6;">
+          You've been added to <strong>${esc(companyName)}</strong> on Kitify.
+          You can log in to your existing account and switch between your
+          companies from the sidebar.
+        </p>
+        <div style="margin: 32px 0;">
+          <a href="${loginUrl}"
+             style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;">
+            Go to Kitify
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px;">
+          Or copy this link: <a href="${loginUrl}" style="color: #666;">${loginUrl}</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+        <p style="color: #aaa; font-size: 12px;">
+          Kitify — Custom Branded Products
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendOrderStatusEmail({
   to,
   companyName,

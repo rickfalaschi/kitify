@@ -462,7 +462,6 @@ export function EditProductForm({
                 (vi) => vi.variationId === color.id,
               );
               const expanded = expandedColors.has(color.id);
-              const formId = `variation-images-upload-${color.id}`;
 
               return (
                 <div
