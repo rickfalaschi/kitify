@@ -48,7 +48,7 @@ function Header() {
           <img
             src="/kitify-logo.svg"
             alt="Kitify"
-            className="h-8 w-auto"
+            className="h-11 w-auto"
           />
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
