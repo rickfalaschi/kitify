@@ -15,6 +15,9 @@ export const metadata: Metadata = {
   title: "Kitify - Custom Branded Products for Companies",
   description:
     "Platform for companies to create custom branded product kits for employee onboarding.",
+  icons: {
+    icon: "/kitify-logo.svg",
+  },
 };
 
 export default async function RootLayout({

@@ -1,6 +1,7 @@
 import { db } from "@/db";
 import { users, companyUsers, companies } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, or, ilike, asc } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
@@ -8,8 +9,34 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { AutoSubmitSelect } from "@/components/auto-submit-select";
 import { Trash2 } from "lucide-react";
+import { SearchFilterInput } from "@/components/search-filter-input";
+import { StatusFilterSelect } from "@/components/status-filter-select";
 
-export default async function AdminUsersPage() {
+const ROLE_OPTIONS = [
+  { value: "admin", label: "Admin" },
+  { value: "company", label: "Company" },
+];
+
+export default async function AdminUsersPage(props: {
+  searchParams: Promise<{ q?: string; status?: string }>;
+}) {
+  const { q, status: roleParam } = await props.searchParams;
+  const query = q?.trim();
+  const isValidRole = roleParam && ROLE_OPTIONS.some((o) => o.value === roleParam);
+
+  const conditions: SQL[] = [];
+  if (query) {
+    const pattern = `%${query}%`;
+    const or_ = or(ilike(users.name, pattern), ilike(users.email, pattern));
+    if (or_) conditions.push(or_);
+  }
+  if (isValidRole) {
+    conditions.push(
+      eq(users.role, roleParam as typeof users.role.enumValues[number]),
+    );
+  }
+  const whereCondition = conditions.length > 0 ? and(...conditions) : undefined;
+
   const allUsers = await db
     .select({
       id: users.id,
@@ -19,7 +46,8 @@ export default async function AdminUsersPage() {
       createdAt: users.createdAt,
     })
     .from(users)
-    .orderBy(users.name);
+    .where(whereCondition)
+    .orderBy(asc(users.name));
 
   // Get company associations
   const associations = await db
@@ -66,6 +94,23 @@ export default async function AdminUsersPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Users</h1>
         <p className="text-gray-500">Manage all platform users</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <SearchFilterInput
+          basePath="/admin/users"
+          currentQuery={query}
+          placeholder="Search by name or email..."
+          extraParams={{ status: isValidRole ? roleParam : undefined }}
+        />
+        <StatusFilterSelect
+          basePath="/admin/users"
+          currentStatus={isValidRole ? roleParam : undefined}
+          options={ROLE_OPTIONS}
+        />
+        <span className="text-sm text-gray-500">
+          {allUsers.length} {allUsers.length === 1 ? "user" : "users"}
+        </span>
       </div>
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -132,7 +177,9 @@ export default async function AdminUsersPage() {
             {allUsers.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-center text-gray-500 py-8">
-                  No users registered.
+                  {query || isValidRole
+                    ? "No users match your filters."
+                    : "No users registered."}
                 </td>
               </tr>
             )}

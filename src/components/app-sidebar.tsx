@@ -61,13 +61,18 @@ export function AppSidebar({ title, items }: AppSidebarProps) {
       />
       <div className="relative z-10 flex flex-col h-full">
         <div className="border-b border-white/10 px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600 shadow-lg shadow-red-600/20">
-              <Package className="h-4 w-4 text-white" />
-            </span>
-            <span className="text-lg font-bold tracking-tight text-white">
-              {title}
-            </span>
+          <Link href="/" className="flex items-center gap-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/kitify-logo.svg"
+              alt="Kitify"
+              className="h-8 w-auto"
+            />
+            {title !== "Kitify" && (
+              <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
+                {title.replace(/^Kitify\s*/, "")}
+              </span>
+            )}
           </Link>
         </div>
         <nav className="flex-1 overflow-y-auto py-5">

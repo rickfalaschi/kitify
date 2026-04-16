@@ -17,6 +17,9 @@ import { eq, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { PreOrderForm } from "./_components/pre-order-form";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
+import { sendShippingQuoteRequestEmail } from "@/lib/email";
+import type { OrderStatus } from "@/lib/order-status";
 
 export default async function PreOrderPage(props: {
   params: Promise<{ token: string }>;
@@ -78,6 +81,31 @@ export default async function PreOrderPage(props: {
           </p>
           <p className="mt-2 text-sm text-gray-500">
             Your preferences have already been submitted for this order.
+          </p>
+          <a
+            href="/"
+            className="mt-6 inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-5 hover:bg-gray-800 transition-colors"
+          >
+            Go to Kitify
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  // Token expiry: links expire after 30 days so stale links can't be used to
+  // confirm orders indefinitely.
+  if (
+    order.publicTokenExpiresAt &&
+    order.publicTokenExpiresAt.getTime() < Date.now()
+  ) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+        <div className="max-w-md w-full text-center">
+          <p className="text-lg font-semibold text-gray-900">Link expired</p>
+          <p className="mt-2 text-sm text-gray-500">
+            This pre-order link has expired. Please contact your company
+            administrator for a new link.
           </p>
         </div>
       </div>
@@ -245,6 +273,16 @@ export default async function PreOrderPage(props: {
       return {
         error:
           "This pre-order link is no longer active. Your preferences may have already been submitted.",
+      };
+    }
+
+    if (
+      currentOrder.publicTokenExpiresAt &&
+      currentOrder.publicTokenExpiresAt.getTime() < Date.now()
+    ) {
+      return {
+        error:
+          "This pre-order link has expired. Please contact your company administrator for a new link.",
       };
     }
 
@@ -446,6 +484,28 @@ export default async function PreOrderPage(props: {
       .update(orders)
       .set(updateValues)
       .where(eq(orders.id, currentOrder.id));
+
+    // Log the transition. `updateValues.status` is always set in the branches
+    // above, but keep the check defensive in case the flow changes.
+    if (updateValues.status && updateValues.status !== currentOrder.status) {
+      await recordOrderStatusChange({
+        orderId: currentOrder.id,
+        fromStatus: currentOrder.status as OrderStatus,
+        toStatus: updateValues.status,
+        changedByUserId: null,
+        reason: "Pre-order completed by employee",
+      });
+    }
+
+    if (updateValues.status === "awaiting_shipping_quote") {
+      sendShippingQuoteRequestEmail({
+        companyName: company.name,
+        kitName: kit.name,
+        orderId: currentOrder.id,
+      }).catch((err) =>
+        console.error("sendShippingQuoteRequestEmail failed", err),
+      );
+    }
 
     revalidatePath(`/p/${token}`);
     return { success: true };

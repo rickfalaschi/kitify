@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
+
+type ActionResult = { error?: string; success?: boolean };
 
 export function PreOrderInfo({
   publicUrl,
@@ -13,11 +16,25 @@ export function PreOrderInfo({
   orderId: string;
   existingName: string | null;
   existingEmail: string | null;
-  sendLinkAction: (formData: FormData) => Promise<void>;
+  sendLinkAction: (
+    prev: ActionResult,
+    formData: FormData,
+  ) => Promise<ActionResult>;
 }) {
   const [copied, setCopied] = useState(false);
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [state, formAction] = useActionState<ActionResult, FormData>(
+    sendLinkAction,
+    {},
+  );
+  const [showSent, setShowSent] = useState(false);
+
+  useEffect(() => {
+    if (state.success) {
+      setShowSent(true);
+      const t = setTimeout(() => setShowSent(false), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [state]);
 
   async function handleCopy() {
     await navigator.clipboard.writeText(publicUrl);
@@ -55,16 +72,7 @@ export function PreOrderInfo({
         <p className="text-xs text-gray-400 mb-4">
           Send the pre-order link directly to the employee via email.
         </p>
-        <form
-          action={async (formData) => {
-            setSending(true);
-            await sendLinkAction(formData);
-            setSending(false);
-            setSent(true);
-            setTimeout(() => setSent(false), 3000);
-          }}
-          className="space-y-3 max-w-md"
-        >
+        <form action={formAction} className="space-y-3 max-w-md">
           <input type="hidden" name="orderId" value={orderId} />
           <div>
             <label
@@ -98,15 +106,27 @@ export function PreOrderInfo({
               className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
             />
           </div>
-          <button
-            type="submit"
-            disabled={sending}
-            className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-6 hover:bg-gray-800 transition-colors disabled:opacity-50"
-          >
-            {sending ? "Sending..." : sent ? "Sent!" : "Send Link via Email"}
-          </button>
+          {state.error && (
+            <p className="text-sm text-red-600" role="alert">
+              {state.error}
+            </p>
+          )}
+          <SendButton showSent={showSent} />
         </form>
       </div>
     </div>
+  );
+}
+
+function SendButton({ showSent }: { showSent: boolean }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-6 hover:bg-gray-800 transition-colors disabled:opacity-50"
+    >
+      {pending ? "Sending..." : showSent ? "Sent!" : "Send Link via Email"}
+    </button>
   );
 }

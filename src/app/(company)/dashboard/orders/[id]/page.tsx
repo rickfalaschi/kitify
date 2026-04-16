@@ -15,9 +15,15 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getCompany } from "../../_lib/get-company";
 import { CancelOrderButton } from "@/components/cancel-order-button";
-import { canCompanyCancel } from "@/lib/order-status";
+import {
+  canCompanyCancel,
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from "@/lib/order-status";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
 
 async function cancelOrderAction(formData: FormData) {
   "use server";
@@ -64,6 +70,14 @@ async function cancelOrderAction(formData: FormData) {
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(orders.id, orderId));
 
+  await recordOrderStatusChange({
+    orderId,
+    fromStatus: existing.status as OrderStatus,
+    toStatus: "cancelled",
+    changedByUserId: session.user.id,
+    reason: "Cancelled by company",
+  });
+
   const [orderInfo] = await db
     .select({
       userEmail: users.email,
@@ -90,17 +104,6 @@ async function cancelOrderAction(formData: FormData) {
   revalidatePath(`/dashboard/orders/${orderId}`);
   revalidatePath("/dashboard/orders");
 }
-
-const statusConfig = {
-  pending: { label: "Pending", className: "bg-orange-100 text-orange-700" },
-  awaiting_shipping_quote: { label: "Awaiting Shipping Quote", className: "bg-purple-100 text-purple-700" },
-  awaiting_payment: { label: "Awaiting Payment", className: "bg-amber-100 text-amber-700" },
-  payment_confirmed: { label: "Payment Confirmed", className: "bg-yellow-100 text-yellow-700" },
-  in_production: { label: "In Production", className: "bg-blue-100 text-blue-700" },
-  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
-  completed: { label: "Completed", className: "bg-green-100 text-green-700" },
-  cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
-} as const;
 
 export default async function PedidoDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -160,8 +163,6 @@ export default async function PedidoDetailPage(props: {
     address = addr || null;
   }
 
-  const status = statusConfig[order.status];
-
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -177,9 +178,9 @@ export default async function PedidoDetailPage(props: {
             Order - {kit.name}
           </h1>
           <span
-            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}
           >
-            {status.label}
+            {ORDER_STATUS_LABELS[order.status]}
           </span>
         </div>
         <div className="flex items-center gap-2">
@@ -220,9 +221,9 @@ export default async function PedidoDetailPage(props: {
             <div className="flex justify-between">
               <span className="text-gray-500">Status</span>
               <span
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}
               >
-                {status.label}
+                {ORDER_STATUS_LABELS[order.status]}
               </span>
             </div>
             <div className="flex justify-between">

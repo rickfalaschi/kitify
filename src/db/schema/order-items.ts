@@ -10,7 +10,7 @@ export const orderItems = pgTable("order_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   orderId: uuid("order_id")
     .notNull()
-    .references(() => orders.id),
+    .references(() => orders.id, { onDelete: "cascade" }),
   // Snapshot fields (frozen at order time)
   productName: varchar("product_name", { length: 255 }).notNull(),
   productImageUrl: text("product_image_url"),

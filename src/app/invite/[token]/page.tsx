@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { hash } from "bcryptjs";
 import { redirect } from "next/navigation";
 import { InviteForm, type InviteState } from "./_components/invite-form";
@@ -64,23 +64,27 @@ export default async function InvitePage(props: {
       return { error: "Passwords do not match." };
     }
 
-    // Re-verify token still exists (guards against double-submit)
-    const [existing] = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(eq(users.inviteToken, inviteToken))
-      .limit(1);
-
-    if (!existing) {
-      return { error: "This invite link is no longer valid." };
-    }
-
     const passwordHash = await hash(password, 12);
 
-    await db
+    // Atomic claim: UPDATE ... WHERE inviteToken = $1 AND passwordHash IS NULL
+    // RETURNING id. Two rapid clicks race to the same row — only the first
+    // one satisfies the WHERE clause (because the winner nulls the token and
+    // sets passwordHash in the same row update), so at most one succeeds.
+    // Postgres row-level locking guarantees this is safe under concurrency.
+    const claimed = await db
       .update(users)
       .set({ passwordHash, inviteToken: null })
-      .where(eq(users.inviteToken, inviteToken));
+      .where(
+        and(
+          eq(users.inviteToken, inviteToken),
+          isNull(users.passwordHash),
+        ),
+      )
+      .returning({ id: users.id });
+
+    if (claimed.length === 0) {
+      return { error: "This invite link is no longer valid." };
+    }
 
     redirect("/login");
   }
@@ -89,7 +93,12 @@ export default async function InvitePage(props: {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm w-full max-w-md">
         <div className="p-6 pb-0 text-center">
-          <span className="text-2xl font-bold text-gray-900">Kitify</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/kitify-logo-dark.svg"
+            alt="Kitify"
+            className="mx-auto h-10 w-auto"
+          />
           <h2 className="mt-4 text-xl font-semibold text-gray-900">
             Set up your account
           </h2>

@@ -6,7 +6,7 @@ export const kitItems = pgTable("kit_items", {
   id: uuid("id").primaryKey().defaultRandom(),
   kitId: uuid("kit_id")
     .notNull()
-    .references(() => kits.id),
+    .references(() => kits.id, { onDelete: "cascade" }),
   productId: uuid("product_id")
     .notNull()
     .references(() => products.id),

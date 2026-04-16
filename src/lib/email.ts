@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { getOrderStatusLabel } from "@/lib/order-status";
 
 function esc(str: string): string {
   return str
@@ -117,18 +118,7 @@ export async function sendOrderStatusEmail({
   orderId: string;
   newStatus: string;
 }) {
-  const statusLabels: Record<string, string> = {
-    pending: "Pending",
-    awaiting_shipping_quote: "Awaiting Shipping Quote",
-    awaiting_payment: "Awaiting Payment",
-    payment_confirmed: "Payment Confirmed",
-    in_production: "In Production",
-    shipped: "Shipped",
-    completed: "Completed",
-    cancelled: "Cancelled",
-  };
-
-  const label = statusLabels[newStatus] || newStatus;
+  const label = getOrderStatusLabel(newStatus);
   const dashboardUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/dashboard/orders/${orderId}`;
 
   await transporter.sendMail({
@@ -154,6 +144,50 @@ export async function sendOrderStatusEmail({
         <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
         <p style="color: #aaa; font-size: 12px;">
           Kitify — Custom Branded Products
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendShippingQuoteRequestEmail({
+  companyName,
+  kitName,
+  orderId,
+}: {
+  companyName: string;
+  kitName: string;
+  orderId: string;
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER;
+  if (!adminEmail) return;
+
+  const adminUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/admin/orders/${orderId}`;
+
+  await transporter.sendMail({
+    from: `"Kitify" <${process.env.SMTP_USER}>`,
+    to: adminEmail,
+    subject: `Shipping quote needed: ${kitName} (${companyName})`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 560px; margin: 0 auto;">
+        <h2 style="color: #111;">Shipping Quote Requested</h2>
+        <p style="color: #444; font-size: 16px; line-height: 1.6;">
+          <strong>${esc(companyName)}</strong> has placed an international order for
+          <strong>${esc(kitName)}</strong> that requires a shipping quote before payment
+          can be released.
+        </p>
+        <div style="margin: 32px 0;">
+          <a href="${adminUrl}"
+             style="display: inline-block; background: #111; color: #fff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 500;">
+            Set Shipping Cost
+          </a>
+        </div>
+        <p style="color: #888; font-size: 13px;">
+          Or open: <a href="${adminUrl}" style="color: #666;">${adminUrl}</a>
+        </p>
+        <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0;" />
+        <p style="color: #aaa; font-size: 12px;">
+          Kitify — Admin notification
         </p>
       </div>
     `,

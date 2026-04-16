@@ -43,13 +43,13 @@ function Header() {
   return (
     <header className="absolute top-0 inset-x-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-red-600">
-            <Package className="h-4 w-4 text-white" />
-          </span>
-          <span className="text-lg font-bold tracking-tight text-white">
-            Kitify
-          </span>
+        <Link href="/" className="flex items-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/kitify-logo.svg"
+            alt="Kitify"
+            className="h-8 w-auto"
+          />
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-300">
           <a href="#how-it-works" className="hover:text-white transition-colors">
@@ -615,13 +615,13 @@ function CTAFooter() {
         <div className="max-w-7xl mx-auto px-6 py-16">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10">
             <div className="col-span-2">
-              <Link href="/" className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-red-600">
-                  <Package className="h-4 w-4 text-white" />
-                </span>
-                <span className="text-lg font-bold tracking-tight text-white">
-                  Kitify
-                </span>
+              <Link href="/" className="flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/kitify-logo.svg"
+                  alt="Kitify"
+                  className="h-8 w-auto"
+                />
               </Link>
               <p className="mt-4 text-sm text-gray-400 max-w-sm">
                 Custom branded welcome kits for companies that care about their

@@ -30,11 +30,12 @@ export const orders = pgTable("orders", {
     .references(() => kits.id),
   userId: uuid("user_id")
     .notNull()
-    .references(() => users.id),
+    .references(() => users.id, { onDelete: "restrict" }),
   status: orderStatusEnum("status").notNull().default("pending"),
   deliveryType: deliveryTypeEnum("delivery_type").notNull(),
   companyAddressId: uuid("company_address_id").references(() => companyAddresses.id),
   publicToken: varchar("public_token", { length: 64 }).unique(),
+  publicTokenExpiresAt: timestamp("public_token_expires_at"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }),
   shippingCost: numeric("shipping_cost", { precision: 10, scale: 2 }),

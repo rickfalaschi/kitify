@@ -22,6 +22,8 @@ import Link from "next/link";
 import { getCompany } from "../../_lib/get-company";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { OrderForm } from "./_components/order-form";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
+import { sendShippingQuoteRequestEmail } from "@/lib/email";
 
 export default async function NovoPedidoPage(props: {
   searchParams: Promise<{ kitId?: string }>;
@@ -369,6 +371,11 @@ export default async function NovoPedidoPage(props: {
     if (isPreorder) {
       values.status = "pending";
       values.publicToken = randomBytes(32).toString("hex");
+      // Public pre-order links expire after 30 days so stale links can't be
+      // used to confirm orders indefinitely.
+      values.publicTokenExpiresAt = new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000,
+      );
     }
 
     if (deliveryType === "company_address") {
@@ -457,6 +464,15 @@ export default async function NovoPedidoPage(props: {
     }
 
     if (isPreorder) {
+      // Record initial state for pre-orders (they'll stay in "pending" until
+      // the employee completes the public form).
+      await recordOrderStatusChange({
+        orderId: newOrder.id,
+        fromStatus: null,
+        toStatus: "pending",
+        changedByUserId: userId,
+        reason: "Pre-order created",
+      });
       revalidatePath("/dashboard/orders");
       redirect(`/dashboard/orders/pre-order/${newOrder.id}`);
     }
@@ -502,6 +518,14 @@ export default async function NovoPedidoPage(props: {
         })
         .where(eq(orders.id, newOrder.id));
 
+      await recordOrderStatusChange({
+        orderId: newOrder.id,
+        fromStatus: null,
+        toStatus: "awaiting_payment",
+        changedByUserId: userId,
+        reason: "Order placed (UK, direct payment)",
+      });
+
       revalidatePath("/dashboard/orders");
       redirect(`/dashboard/orders/${newOrder.id}/pay`);
     } else {
@@ -513,6 +537,22 @@ export default async function NovoPedidoPage(props: {
           totalAmount: total.toString(),
         })
         .where(eq(orders.id, newOrder.id));
+
+      await recordOrderStatusChange({
+        orderId: newOrder.id,
+        fromStatus: null,
+        toStatus: "awaiting_shipping_quote",
+        changedByUserId: userId,
+        reason: "Order placed (international, needs shipping quote)",
+      });
+
+      sendShippingQuoteRequestEmail({
+        companyName: company.name,
+        kitName: kit.name,
+        orderId: newOrder.id,
+      }).catch((err) =>
+        console.error("sendShippingQuoteRequestEmail failed", err),
+      );
 
       revalidatePath("/dashboard/orders");
       redirect(`/dashboard/orders`);

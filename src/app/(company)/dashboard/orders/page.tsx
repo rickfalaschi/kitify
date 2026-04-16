@@ -8,52 +8,47 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmForm } from "@/components/confirm-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { StatusFilterSelect } from "@/components/status-filter-select";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
+import {
+  ALL_ORDER_STATUSES,
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  canCompanyCancel,
+  type OrderStatus,
+} from "@/lib/order-status";
 
 const ITEMS_PER_PAGE = 20;
-
-const statusConfig = {
-  pending: { label: "Pending", className: "bg-orange-100 text-orange-700" },
-  awaiting_shipping_quote: { label: "Awaiting Shipping Quote", className: "bg-purple-100 text-purple-700" },
-  awaiting_payment: { label: "Awaiting Payment", className: "bg-amber-100 text-amber-700" },
-  payment_confirmed: { label: "Payment Confirmed", className: "bg-yellow-100 text-yellow-700" },
-  in_production: { label: "In Production", className: "bg-blue-100 text-blue-700" },
-  shipped: { label: "Shipped", className: "bg-indigo-100 text-indigo-700" },
-  completed: { label: "Completed", className: "bg-green-100 text-green-700" },
-  cancelled: { label: "Cancelled", className: "bg-red-100 text-red-700" },
-} as const;
 
 const deliveryLabels = {
   company_address: "Company address",
   employee_address: "Employee address",
 } as const;
 
-const allStatuses = [
-  "pending",
-  "awaiting_shipping_quote",
-  "awaiting_payment",
-  "payment_confirmed",
-  "in_production",
-  "shipped",
-  "completed",
-  "cancelled",
-] as const;
+const allStatuses = ALL_ORDER_STATUSES;
 
 async function cancelOrder(formData: FormData) {
   "use server";
   const orderId = formData.get("orderId") as string;
   if (!orderId) return;
-  const { company } = await getCompany();
+  const { company, userId } = await getCompany();
   const [order] = await db
     .select({ id: orders.id, status: orders.status, companyId: orders.companyId })
     .from(orders)
     .where(eq(orders.id, orderId))
     .limit(1);
   if (!order || order.companyId !== company.id) return;
-  if (order.status === "shipped" || order.status === "completed" || order.status === "cancelled") return;
+  if (!canCompanyCancel(order.status)) return;
   await db
     .update(orders)
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(orders.id, orderId));
+  await recordOrderStatusChange({
+    orderId,
+    fromStatus: order.status as OrderStatus,
+    toStatus: "cancelled",
+    changedByUserId: userId,
+    reason: "Cancelled by company (list page)",
+  });
   revalidatePath("/dashboard/orders");
 }
 
@@ -113,7 +108,7 @@ export default async function PedidosPage(props: {
         <StatusFilterSelect
           basePath="/dashboard/orders"
           currentStatus={filterStatus}
-          options={allStatuses.map((s) => ({ value: s, label: statusConfig[s].label }))}
+          options={allStatuses.map((s) => ({ value: s, label: ORDER_STATUS_LABELS[s] }))}
         />
       </div>
 
@@ -136,7 +131,6 @@ export default async function PedidosPage(props: {
               </thead>
               <tbody>
                 {companyOrders.map(({ order, kit }) => {
-                  const status = statusConfig[order.status];
                   return (
                     <tr key={order.id} className="border-b border-gray-100 last:border-0">
                       <td className="py-3 px-4">
@@ -148,8 +142,8 @@ export default async function PedidosPage(props: {
                         </Link>
                       </td>
                       <td className="py-3 px-4">
-                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${status.className}`}>
-                          {status.label}
+                        <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}>
+                          {ORDER_STATUS_LABELS[order.status]}
                         </span>
                         {order.status === "awaiting_payment" && (
                           <a href={`/dashboard/orders/${order.id}/pay`} className="ml-2 text-xs text-amber-700 underline font-medium hover:text-amber-900">Pay Now</a>
@@ -171,7 +165,7 @@ export default async function PedidosPage(props: {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex justify-end">
-                          {!["shipped", "completed", "cancelled"].includes(order.status) && (
+                          {canCompanyCancel(order.status) && (
                             <ConfirmForm action={cancelOrder} message="Are you sure you want to cancel this order?">
                               <input type="hidden" name="orderId" value={order.id} />
                               <SubmitButton

@@ -2,7 +2,6 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { Package } from "lucide-react";
 import { requestResetAction, type ResetState } from "../_actions/reset-password";
 
 export default function ForgotPasswordPage() {
@@ -35,13 +34,13 @@ export default function ForgotPasswordPage() {
         <div className="relative w-full max-w-md">
           <div className="rounded-2xl bg-white shadow-2xl shadow-black/40 overflow-hidden">
             <div className="p-8 text-center">
-              <Link href="/" className="inline-flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-md bg-red-600">
-                  <Package className="h-4 w-4 text-white" />
-                </span>
-                <span className="text-lg font-bold tracking-tight text-gray-900">
-                  Kitify
-                </span>
+              <Link href="/" className="inline-flex items-center">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/kitify-logo-dark.svg"
+                  alt="Kitify"
+                  className="h-9 w-auto"
+                />
               </Link>
               <h2 className="mt-6 text-2xl font-bold text-gray-900">
                 Check your email
@@ -88,13 +87,13 @@ export default function ForgotPasswordPage() {
       <div className="relative w-full max-w-md">
         <div className="rounded-2xl bg-white shadow-2xl shadow-black/40 overflow-hidden">
           <div className="p-8 pb-0 text-center">
-            <Link href="/" className="inline-flex items-center gap-2">
-              <span className="flex h-8 w-8 items-center justify-center rounded-md bg-red-600">
-                <Package className="h-4 w-4 text-white" />
-              </span>
-              <span className="text-lg font-bold tracking-tight text-gray-900">
-                Kitify
-              </span>
+            <Link href="/" className="inline-flex items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/kitify-logo-dark.svg"
+                alt="Kitify"
+                className="h-9 w-auto"
+              />
             </Link>
             <h2 className="mt-6 text-2xl font-bold text-gray-900">
               Forgot your password?

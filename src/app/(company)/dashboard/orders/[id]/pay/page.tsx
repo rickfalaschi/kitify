@@ -8,6 +8,8 @@ import { stripe } from "@/lib/stripe";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { PaymentForm } from "./_components/payment-form";
 import { CheckCircle } from "lucide-react";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
+import type { OrderStatus } from "@/lib/order-status";
 
 export default async function PayPage(props: {
   params: Promise<{ id: string }>;
@@ -15,7 +17,7 @@ export default async function PayPage(props: {
 }) {
   const { id } = await props.params;
   const searchParams = await props.searchParams;
-  const { company } = await getCompany();
+  const { company, userId } = await getCompany();
 
   // Fetch order
   const [order] = await db
@@ -50,6 +52,17 @@ export default async function PayPage(props: {
         .update(orders)
         .set({ status: "payment_confirmed", updatedAt: new Date() })
         .where(eq(orders.id, id));
+
+      // Only record if this isn't a re-render of an already-confirmed order.
+      // (The status check above redirects when already paid, so getting here
+      // implies the webhook hasn't processed yet and we're the first writer.)
+      await recordOrderStatusChange({
+        orderId: id,
+        fromStatus: order.status as OrderStatus,
+        toStatus: "payment_confirmed",
+        changedByUserId: userId,
+        reason: `Payment confirmed via redirect (pi=${pi.id})`,
+      });
 
       // Show success
       return (

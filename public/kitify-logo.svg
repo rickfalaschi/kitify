@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Camada_2" data-name="Camada 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 427.96 158.24">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: #e30a14;
+      }
+
+      .cls-2 {
+        fill: #fff;
+      }
+    </style>
+  </defs>
+  <g id="Camada_1-2" data-name="Camada 1">
+    <g>
+      <rect class="cls-1" x="-8.23" y="95.98" width="76.65" height="12" rx="3" ry="3" transform="translate(80.93 8.58) rotate(45)"/>
+      <rect class="cls-1" x="-8.23" y="50.26" width="76.65" height="12" rx="3" ry="3" transform="translate(-30.97 37.76) rotate(-45)"/>
+      <rect class="cls-1" x="89.82" y="50.26" width="76.65" height="12" rx="3" ry="3" transform="translate(178.97 186.66) rotate(-135)"/>
+      <rect class="cls-1" x="89.82" y="95.98" width="76.65" height="12" rx="3" ry="3" transform="translate(290.86 83.48) rotate(135)"/>
+      <rect class="cls-1" x="73.12" y="1.24" width="12" height="12" rx="3" ry="3" transform="translate(129.95 68.31) rotate(-135)"/>
+      <rect class="cls-1" x="73.12" y="145" width="12" height="12" rx="3" ry="3" transform="translate(28.3 313.72) rotate(-135)"/>
+      <rect class="cls-1" x="59.3" y="59.3" width="39.65" height="39.65" rx="3" ry="3" transform="translate(79.12 191.01) rotate(-135)"/>
+      <g>
+        <path class="cls-2" d="M214.74,82.77l-7.1,7.3v11.46h-8.32v-44.8h8.32v22.97l22.14-22.97h9.34l-18.81,20.03,19.97,24.77h-9.73l-15.81-18.75Z"/>
+        <path class="cls-2" d="M250.97,56.72h8.32v44.8h-8.32v-44.8Z"/>
+        <path class="cls-2" d="M285.47,63.76h-14.85v-7.04h38.01v7.04h-14.85v37.76h-8.32v-37.76Z"/>
+        <path class="cls-2" d="M319.91,56.72h8.32v44.8h-8.32v-44.8Z"/>
+        <path class="cls-2" d="M353.65,63.7v13.63h21.63v7.04h-21.63v17.15h-8.32v-44.8h32.7v6.98h-24.38Z"/>
+        <path class="cls-2" d="M410.42,85.71v15.81h-8.32v-15.68l-17.6-29.12h8.9l13.12,21.82,13.25-21.82h8.19l-17.54,28.99Z"/>
+      </g>
+    </g>
+  </g>
+</svg>

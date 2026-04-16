@@ -18,7 +18,14 @@ import { CancelOrderButton } from "@/components/cancel-order-button";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
-import { canAdminCancel } from "@/lib/order-status";
+import {
+  ALL_ORDER_STATUSES,
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  canAdminCancel,
+  type OrderStatus,
+} from "@/lib/order-status";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
 
 async function updateOrderStatusAction(formData: FormData) {
   "use server";
@@ -36,10 +43,26 @@ async function updateOrderStatusAction(formData: FormData) {
     | "completed"
     | "cancelled";
 
+  const [prev] = await db
+    .select({ status: orders.status })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
   await db
     .update(orders)
     .set({ status, updatedAt: new Date() })
     .where(eq(orders.id, orderId));
+
+  if (prev && prev.status !== status) {
+    await recordOrderStatusChange({
+      orderId,
+      fromStatus: prev.status as OrderStatus,
+      toStatus: status,
+      changedByUserId: session.user.id,
+      reason: "Admin status update",
+    });
+  }
 
   // Send email notification
   const [orderInfo] = await db
@@ -77,6 +100,12 @@ async function setShippingCostAction(formData: FormData) {
   const orderId = formData.get("orderId") as string;
   const shippingCost = formData.get("shippingCost") as string;
 
+  const [prev] = await db
+    .select({ status: orders.status })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
   await db
     .update(orders)
     .set({
@@ -95,6 +124,16 @@ async function setShippingCostAction(formData: FormData) {
       updatedAt: new Date(),
     })
     .where(eq(orders.id, orderId));
+
+  if (prev && prev.status !== "awaiting_payment") {
+    await recordOrderStatusChange({
+      orderId,
+      fromStatus: prev.status as OrderStatus,
+      toStatus: "awaiting_payment",
+      changedByUserId: session.user.id,
+      reason: `Admin set shipping cost (${shippingCost})`,
+    });
+  }
 
   revalidatePath(`/admin/orders/${orderId}`);
   revalidatePath("/admin/orders");
@@ -128,6 +167,14 @@ async function cancelOrderAction(formData: FormData) {
     .set({ status: "cancelled", updatedAt: new Date() })
     .where(eq(orders.id, orderId));
 
+  await recordOrderStatusChange({
+    orderId,
+    fromStatus: existing.status as OrderStatus,
+    toStatus: "cancelled",
+    changedByUserId: session.user.id,
+    reason: "Admin cancelled",
+  });
+
   const [orderInfo] = await db
     .select({
       userEmail: users.email,
@@ -155,27 +202,8 @@ async function cancelOrderAction(formData: FormData) {
   revalidatePath("/admin/orders");
 }
 
-const statusColors: Record<string, string> = {
-  pending: "bg-orange-100 text-orange-700",
-  awaiting_shipping_quote: "bg-purple-100 text-purple-700",
-  awaiting_payment: "bg-amber-100 text-amber-700",
-  payment_confirmed: "bg-yellow-100 text-yellow-700",
-  in_production: "bg-blue-100 text-blue-700",
-  shipped: "bg-indigo-100 text-indigo-700",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
-
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  awaiting_shipping_quote: "Awaiting Shipping Quote",
-  awaiting_payment: "Awaiting Payment",
-  payment_confirmed: "Payment Confirmed",
-  in_production: "In Production",
-  shipped: "Shipped",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
+const statusColors = ORDER_STATUS_COLORS;
+const statusLabels = ORDER_STATUS_LABELS;
 
 export default async function PedidoDetailPage(props: {
   params: Promise<{ id: string }>;
@@ -527,14 +555,11 @@ export default async function PedidoDetailPage(props: {
                 defaultValue={order.status}
                 className="w-48 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
               >
-                <option value="pending">Pending</option>
-                <option value="awaiting_shipping_quote">Awaiting Shipping Quote</option>
-                <option value="awaiting_payment">Awaiting Payment</option>
-                <option value="payment_confirmed">Payment Confirmed</option>
-                <option value="in_production">In Production</option>
-                <option value="shipped">Shipped</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
+                {ALL_ORDER_STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {ORDER_STATUS_LABELS[s]}
+                  </option>
+                ))}
               </select>
               <SubmitButton>Update</SubmitButton>
             </form>

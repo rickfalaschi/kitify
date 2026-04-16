@@ -32,13 +32,18 @@ export default async function PreOrderPage(props: {
 
   const publicUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/p/${result.order.publicToken}`;
 
-  async function sendLinkAction(formData: FormData) {
+  async function sendLinkAction(
+    _prev: { error?: string; success?: boolean },
+    formData: FormData,
+  ): Promise<{ error?: string; success?: boolean }> {
     "use server";
     const id = formData.get("orderId") as string;
     const employeeName = formData.get("employeeName") as string;
     const employeeEmail = formData.get("employeeEmail") as string;
 
-    if (!employeeEmail) return;
+    if (!employeeEmail) {
+      return { error: "Please enter the employee's email." };
+    }
 
     await db
       .update(orders)
@@ -57,19 +62,30 @@ export default async function PreOrderPage(props: {
       .where(eq(orders.id, id))
       .limit(1);
 
-    if (!orderData) return;
+    if (!orderData) {
+      return { error: "Order not found." };
+    }
 
     const url = `${process.env.AUTH_URL || "http://localhost:3000"}/p/${orderData.order.publicToken}`;
 
-    await sendPreOrderEmail({
-      to: employeeEmail,
-      employeeName: employeeName || undefined,
-      companyName: orderData.company.name,
-      kitName: orderData.kit.name,
-      publicUrl: url,
-    });
+    try {
+      await sendPreOrderEmail({
+        to: employeeEmail,
+        employeeName: employeeName || undefined,
+        companyName: orderData.company.name,
+        kitName: orderData.kit.name,
+        publicUrl: url,
+      });
+    } catch (err) {
+      console.error("sendPreOrderEmail failed", err);
+      return {
+        error:
+          "We saved the employee details, but the email could not be sent. Please share the link manually or try again.",
+      };
+    }
 
     revalidatePath(`/dashboard/orders/pre-order/${id}`);
+    return { success: true };
   }
 
   return (

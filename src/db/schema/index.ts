@@ -16,6 +16,7 @@ export * from "./company-product-mockups";
 export * from "./orders";
 export * from "./order-items";
 export * from "./order-item-selections";
+export * from "./order-status-changes";
 export * from "./settings";
 export * from "./categories";
 export * from "./product-categories";

@@ -5,6 +5,13 @@ import { db } from "@/db";
 import { orders, companies, kits, users } from "@/db/schema";
 import { sendOrderStatusEmail } from "@/lib/email";
 import { auth } from "@/lib/auth";
+import { recordOrderStatusChange } from "@/lib/record-order-status-change";
+import {
+  ALL_ORDER_STATUSES,
+  ORDER_STATUS_COLORS,
+  ORDER_STATUS_LABELS,
+  type OrderStatus,
+} from "@/lib/order-status";
 import { redirect } from "next/navigation";
 import { SubmitButton } from "@/components/submit-button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -28,10 +35,26 @@ async function updateOrderStatusAction(formData: FormData) {
     | "completed"
     | "cancelled";
 
+  const [prev] = await db
+    .select({ status: orders.status })
+    .from(orders)
+    .where(eq(orders.id, orderId))
+    .limit(1);
+
   await db
     .update(orders)
     .set({ status, updatedAt: new Date() })
     .where(eq(orders.id, orderId));
+
+  if (prev && prev.status !== status) {
+    await recordOrderStatusChange({
+      orderId,
+      fromStatus: prev.status as OrderStatus,
+      toStatus: status,
+      changedByUserId: session.user.id,
+      reason: "Admin status update (list page)",
+    });
+  }
 
   // Send email notification
   const [orderInfo] = await db
@@ -60,38 +83,9 @@ async function updateOrderStatusAction(formData: FormData) {
   revalidatePath("/admin/orders");
 }
 
-const statusColors: Record<string, string> = {
-  pending: "bg-orange-100 text-orange-700",
-  awaiting_shipping_quote: "bg-purple-100 text-purple-700",
-  awaiting_payment: "bg-amber-100 text-amber-700",
-  payment_confirmed: "bg-yellow-100 text-yellow-700",
-  in_production: "bg-blue-100 text-blue-700",
-  shipped: "bg-indigo-100 text-indigo-700",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-700",
-};
-
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  awaiting_shipping_quote: "Awaiting Shipping Quote",
-  awaiting_payment: "Awaiting Payment",
-  payment_confirmed: "Payment Confirmed",
-  in_production: "In Production",
-  shipped: "Shipped",
-  completed: "Completed",
-  cancelled: "Cancelled",
-};
-
-const allStatuses = [
-  "pending",
-  "awaiting_shipping_quote",
-  "awaiting_payment",
-  "payment_confirmed",
-  "in_production",
-  "shipped",
-  "completed",
-  "cancelled",
-];
+const statusColors = ORDER_STATUS_COLORS;
+const statusLabels = ORDER_STATUS_LABELS;
+const allStatuses = ALL_ORDER_STATUSES;
 
 export default async function PedidosPage(props: {
   searchParams: Promise<{ status?: string; page?: string }>;
@@ -100,9 +94,15 @@ export default async function PedidosPage(props: {
   const currentPage = Math.max(1, parseInt(pageParam || "1", 10) || 1);
 
   // Build where condition
-  const whereCondition = filterStatus && allStatuses.includes(filterStatus)
-    ? and(eq(orders.status, filterStatus as typeof orders.status.enumValues[number]))
-    : undefined;
+  const whereCondition =
+    filterStatus && (allStatuses as readonly string[]).includes(filterStatus)
+      ? and(
+          eq(
+            orders.status,
+            filterStatus as typeof orders.status.enumValues[number],
+          ),
+        )
+      : undefined;
 
   // Count total
   const [{ count: totalCount }] = await db
@@ -201,14 +201,11 @@ export default async function PedidosPage(props: {
                       defaultValue={order.status}
                       className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="awaiting_shipping_quote">Awaiting Shipping Quote</option>
-                      <option value="awaiting_payment">Awaiting Payment</option>
-                      <option value="payment_confirmed">Payment Confirmed</option>
-                      <option value="in_production">In Production</option>
-                      <option value="shipped">Shipped</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
+                      {allStatuses.map((s) => (
+                        <option key={s} value={s}>
+                          {statusLabels[s]}
+                        </option>
+                      ))}
                     </select>
                     <SubmitButton variant="secondary" className="text-xs h-8 px-3">Save</SubmitButton>
                   </form>

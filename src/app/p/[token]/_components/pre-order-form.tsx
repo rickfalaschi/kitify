@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
 
 type ItemData = {
   kitItemId: string;
@@ -112,9 +113,12 @@ export function PreOrderForm({
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-2xl px-4 py-12">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold tracking-widest text-gray-400 uppercase">
-            Kitify
-          </p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/kitify-logo-dark.svg"
+            alt="Kitify"
+            className="mx-auto h-10 w-auto"
+          />
           <h1 className="mt-4 text-2xl font-bold text-gray-900">
             Choose your kit preferences
           </h1>
@@ -343,8 +347,10 @@ export function PreOrderForm({
             <button
               type="submit"
               disabled={pending}
-              className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-8 hover:bg-gray-800 transition-colors disabled:opacity-50"
+              aria-busy={pending}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-gray-900 text-white text-sm font-medium h-10 px-8 hover:bg-gray-800 transition-colors disabled:opacity-50"
             >
+              {pending && <Loader2 className="h-4 w-4 animate-spin" />}
               {pending ? "Submitting..." : "Confirm Preferences"}
             </button>
           </div>
