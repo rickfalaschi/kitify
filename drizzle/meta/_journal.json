@@ -71,6 +71,13 @@
       "when": 1776348000000,
       "tag": "0009_add_category_parent",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1776349000000,
+      "tag": "0010_add_cancelled_status",
+      "breakpoints": true
     }
   ]
 }
