@@ -98,7 +98,7 @@ async function cancelOrderAction(formData: FormData) {
       kitName: orderInfo.kitName,
       orderId,
       newStatus: "cancelled",
-    }).catch(() => {});
+    }).catch((err) => console.error("sendOrderStatusEmail failed:", err));
   }
 
   revalidatePath(`/dashboard/orders/${orderId}`);

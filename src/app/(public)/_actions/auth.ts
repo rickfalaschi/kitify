@@ -23,7 +23,7 @@ export async function loginAction(
 
   const parsed = loginSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return { error: parsed.error.issues?.[0]?.message ?? "Invalid input" };
   }
 
   try {
@@ -69,7 +69,7 @@ export async function registerAction(
 
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
+    return { error: parsed.error.issues?.[0]?.message ?? "Invalid input" };
   }
 
   // Check if email already exists

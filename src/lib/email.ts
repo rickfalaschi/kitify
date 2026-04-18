@@ -9,15 +9,31 @@ function esc(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: Number(process.env.SMTP_PORT) || 465,
-  secure: true,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+const smtpConfigured = !!(
+  process.env.SMTP_HOST &&
+  process.env.SMTP_USER &&
+  process.env.SMTP_PASS
+);
+
+const transporter = smtpConfigured
+  ? nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT) || 465,
+      secure: true,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+    })
+  : null;
+
+async function send(options: nodemailer.SendMailOptions): Promise<void> {
+  if (!transporter) {
+    console.warn("[email] SMTP not configured — skipping email to:", options.to);
+    return;
+  }
+  await transporter.sendMail(options);
+}
 
 export async function sendPreOrderEmail({
   to,
@@ -34,7 +50,7 @@ export async function sendPreOrderEmail({
 }) {
   const greeting = employeeName ? `Hi ${esc(employeeName)}` : "Hi";
 
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to,
     subject: "Your welcome kit is ready — choose your preferences",
@@ -76,7 +92,7 @@ export async function sendInviteEmail({
 }) {
   const greeting = employeeName ? `Hi ${esc(employeeName)}` : "Hi";
 
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to,
     subject: `You've been invited to join ${companyName} on Kitify`,
@@ -118,7 +134,7 @@ export async function sendAddedToCompanyEmail({
 }) {
   const greeting = userName ? `Hi ${esc(userName)}` : "Hi";
 
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to,
     subject: `You've been added to ${companyName} on Kitify`,
@@ -164,7 +180,7 @@ export async function sendOrderStatusEmail({
   const label = getOrderStatusLabel(newStatus);
   const dashboardUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/dashboard/orders/${orderId}`;
 
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to,
     subject: `Order update: ${kitName} — ${label}`,
@@ -207,7 +223,7 @@ export async function sendShippingQuoteRequestEmail({
 
   const adminUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/admin/orders/${orderId}`;
 
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to: adminEmail,
     subject: `Shipping quote needed: ${kitName} (${companyName})`,
@@ -244,7 +260,7 @@ export async function sendPasswordResetEmail({
   to: string;
   resetUrl: string;
 }) {
-  await transporter.sendMail({
+  await send({
     from: `"Kitify" <${process.env.SMTP_USER}>`,
     to,
     subject: "Reset your password",

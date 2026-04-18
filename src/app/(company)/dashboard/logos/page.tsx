@@ -51,13 +51,19 @@ export default async function LogosPage() {
 
     if (!logo || logo.companyId !== company.id) return;
 
+    // Extract S3 key from URL — try "logos/" prefix first, fall back to last segments
     const urlParts = logo.fileUrl.split("/");
     const logosIndex = urlParts.indexOf("logos");
-    if (logosIndex === -1) {
-      throw new Error("Could not determine file path for deletion.");
+    const key = logosIndex !== -1
+      ? urlParts.slice(logosIndex).join("/")
+      : urlParts.slice(-2).join("/");
+
+    try {
+      await deleteFile(key);
+    } catch (err) {
+      console.error("Failed to delete file from S3:", err);
+      // Continue to delete from DB even if S3 fails
     }
-    const key = urlParts.slice(logosIndex).join("/");
-    await deleteFile(key);
 
     await db.delete(companyLogos).where(eq(companyLogos.id, logoId));
     revalidatePath("/dashboard/logos");

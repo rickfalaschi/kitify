@@ -5,7 +5,7 @@ export const kitMockups = pgTable("kit_mockups", {
   id: uuid("id").primaryKey().defaultRandom(),
   kitId: uuid("kit_id")
     .notNull()
-    .references(() => kits.id),
+    .references(() => kits.id, { onDelete: "cascade" }),
   imageUrl: text("image_url").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -96,22 +96,43 @@ export default async function PayPage(props: {
   // Create or retrieve PaymentIntent
   let clientSecret: string;
 
-  if (order.stripePaymentIntentId) {
-    const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
-    clientSecret = pi.client_secret!;
-  } else {
-    const pi = await stripe.paymentIntents.create({
-      amount: Math.round(totalAmount * 100), // cents/pence
-      currency: "gbp",
-      metadata: { orderId: id },
-    });
+  try {
+    if (order.stripePaymentIntentId) {
+      const pi = await stripe.paymentIntents.retrieve(order.stripePaymentIntentId);
+      clientSecret = pi.client_secret ?? "";
+    } else {
+      if (totalAmount <= 0) {
+        throw new Error("Order total must be greater than zero.");
+      }
+      const pi = await stripe.paymentIntents.create({
+        amount: Math.round(totalAmount * 100), // cents/pence
+        currency: "gbp",
+        metadata: { orderId: id },
+      });
 
-    await db
-      .update(orders)
-      .set({ stripePaymentIntentId: pi.id })
-      .where(eq(orders.id, id));
+      await db
+        .update(orders)
+        .set({ stripePaymentIntentId: pi.id })
+        .where(eq(orders.id, id));
 
-    clientSecret = pi.client_secret!;
+      clientSecret = pi.client_secret ?? "";
+    }
+  } catch (err) {
+    console.error("Stripe PaymentIntent error:", err);
+    return (
+      <div className="space-y-6">
+        <h1 className="text-2xl font-bold text-gray-900">Payment Error</h1>
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
+          We couldn&apos;t set up payment for this order. Please try again later or contact support.
+        </div>
+        <Link
+          href={`/dashboard/orders/${id}`}
+          className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium h-9 px-4 hover:bg-gray-50 transition-colors"
+        >
+          Back to order
+        </Link>
+      </div>
+    );
   }
 
   // Fetch kit info for summary

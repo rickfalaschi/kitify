@@ -8,7 +8,7 @@ export const kitItemVariationOptions = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     kitItemVariationId: uuid("kit_item_variation_id")
       .notNull()
-      .references(() => kitItemVariations.id),
+      .references(() => kitItemVariations.id, { onDelete: "cascade" }),
     variationId: uuid("variation_id")
       .notNull()
       .references(() => productVariations.id),

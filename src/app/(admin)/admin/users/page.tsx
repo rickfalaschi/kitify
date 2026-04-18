@@ -1,6 +1,6 @@
 import { db } from "@/db";
-import { users, companyUsers, companies } from "@/db/schema";
-import { and, eq, or, ilike, asc } from "drizzle-orm";
+import { users, companyUsers, companies, orders } from "@/db/schema";
+import { and, eq, or, ilike, asc, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
@@ -92,8 +92,35 @@ export default async function AdminUsersPage(props: {
     const userId = formData.get("userId") as string;
     if (!userId) return;
     if (userId === session.user.id) return;
-    await db.delete(companyUsers).where(eq(companyUsers.userId, userId));
-    await db.delete(users).where(eq(users.id, userId));
+
+    // Check if user has orders — if so, anonymize instead of deleting
+    // to preserve order history (orders.userId has RESTRICT constraint)
+    const [orderCount] = await db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(orders)
+      .where(eq(orders.userId, userId));
+
+    if (orderCount.count > 0) {
+      // Anonymize: remove from companies, wipe personal data but keep record
+      await db.delete(companyUsers).where(eq(companyUsers.userId, userId));
+      await db
+        .update(users)
+        .set({
+          name: "Deleted User",
+          email: `deleted-${userId}@removed.local`,
+          passwordHash: null,
+          inviteToken: null,
+          resetToken: null,
+          resetTokenExpiry: null,
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, userId));
+    } else {
+      // No orders — safe to hard delete
+      await db.delete(companyUsers).where(eq(companyUsers.userId, userId));
+      await db.delete(users).where(eq(users.id, userId));
+    }
+
     revalidatePath("/admin/users");
   }
 

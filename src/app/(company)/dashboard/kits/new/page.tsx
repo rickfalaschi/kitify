@@ -135,7 +135,9 @@ export default async function NewKitPage() {
     const name = formData.get("name") as string;
     const itemsJson = formData.get("items_json") as string;
 
-    if (!name || !itemsJson) return;
+    if (!name || !itemsJson) {
+      throw new Error("Please enter a kit name and add at least one product.");
+    }
 
     let items: KitItemInput[];
     try {

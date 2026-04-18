@@ -122,6 +122,33 @@ async function deleteVariation(formData: FormData) {
   const variationId = formData.get("variationId") as string;
   const productId = formData.get("productId") as string;
 
+  // Remove this variation from any kit configurations first
+  // (kitItemVariationOptions that reference it, and kitItemVariations where it's the default)
+  const kitOptions = await db
+    .select({ id: kitItemVariationOptions.id })
+    .from(kitItemVariationOptions)
+    .where(eq(kitItemVariationOptions.variationId, variationId));
+  if (kitOptions.length > 0) {
+    await db
+      .delete(kitItemVariationOptions)
+      .where(inArray(kitItemVariationOptions.id, kitOptions.map((o) => o.id)));
+  }
+
+  // For kit items where this is the default variation, remove the whole variation config
+  const kitDefaults = await db
+    .select({ id: kitItemVariations.id })
+    .from(kitItemVariations)
+    .where(eq(kitItemVariations.defaultVariationId, variationId));
+  if (kitDefaults.length > 0) {
+    // Delete options for those configs first
+    await db
+      .delete(kitItemVariationOptions)
+      .where(inArray(kitItemVariationOptions.kitItemVariationId, kitDefaults.map((d) => d.id)));
+    await db
+      .delete(kitItemVariations)
+      .where(inArray(kitItemVariations.id, kitDefaults.map((d) => d.id)));
+  }
+
   // Delete variation images from B2 first
   const images = await db
     .select()
@@ -135,6 +162,11 @@ async function deleteVariation(formData: FormData) {
   await db
     .delete(variationImages)
     .where(eq(variationImages.variationId, variationId));
+
+  // Delete mockups referencing this variation
+  await db
+    .delete(companyProductMockups)
+    .where(eq(companyProductMockups.variationId, variationId));
 
   await db
     .delete(productVariations)

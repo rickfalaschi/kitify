@@ -77,7 +77,7 @@ async function updateOrderStatusAction(formData: FormData) {
       kitName: orderInfo.kitName,
       orderId,
       newStatus: status,
-    }).catch(() => {});
+    }).catch((err) => console.error("sendOrderStatusEmail failed:", err));
   }
 
   revalidatePath("/admin/orders");

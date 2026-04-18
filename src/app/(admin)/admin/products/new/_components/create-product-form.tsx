@@ -45,49 +45,55 @@ export function CreateProductForm({
 
     const form = e.currentTarget;
 
-    // Upload images via /api/upload first
-    const uploadedUrls: string[] = [];
-    for (const file of files) {
-      const uploadData = new FormData();
-      uploadData.set("file", file);
-      uploadData.set("context", "products");
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-      if (res.ok) {
-        const { url } = await res.json();
-        uploadedUrls.push(url);
-      }
-    }
-
-    // Pass product data + uploaded URLs to server action
-    const formData = new FormData();
-    formData.set(
-      "code",
-      (form.elements.namedItem("code") as HTMLInputElement).value,
-    );
-    formData.set(
-      "name",
-      (form.elements.namedItem("name") as HTMLInputElement).value,
-    );
-    formData.set(
-      "description",
-      (form.elements.namedItem("description") as HTMLTextAreaElement).value,
-    );
-    formData.set(
-      "basePrice",
-      (form.elements.namedItem("basePrice") as HTMLInputElement).value,
-    );
-    formData.set("imageUrls", JSON.stringify(uploadedUrls));
-
-    for (const catId of selectedCategories) {
-      formData.append("categoryIds", catId);
-    }
-
     try {
+      // Upload images via /api/upload first
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        try {
+          const uploadData = new FormData();
+          uploadData.set("file", file);
+          uploadData.set("context", "products");
+          const res = await fetch("/api/upload", {
+            method: "POST",
+            body: uploadData,
+          });
+          if (res.ok) {
+            const { url } = await res.json();
+            uploadedUrls.push(url);
+          }
+        } catch (err) {
+          console.error(`Failed to upload ${file.name}:`, err);
+        }
+      }
+
+      // Pass product data + uploaded URLs to server action
+      const formData = new FormData();
+      formData.set(
+        "code",
+        (form.elements.namedItem("code") as HTMLInputElement).value,
+      );
+      formData.set(
+        "name",
+        (form.elements.namedItem("name") as HTMLInputElement).value,
+      );
+      formData.set(
+        "description",
+        (form.elements.namedItem("description") as HTMLTextAreaElement).value,
+      );
+      formData.set(
+        "basePrice",
+        (form.elements.namedItem("basePrice") as HTMLInputElement).value,
+      );
+      formData.set("imageUrls", JSON.stringify(uploadedUrls));
+
+      for (const catId of selectedCategories) {
+        formData.append("categoryIds", catId);
+      }
+
       await createProductAction(formData);
     } catch {
+      // error handled by redirect or stays on page
+    } finally {
       setSubmitting(false);
     }
   }

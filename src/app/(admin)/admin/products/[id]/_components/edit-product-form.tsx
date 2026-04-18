@@ -313,22 +313,27 @@ export function EditProductForm({
               onChange={async (e) => {
                 if (!e.target.files?.length) return;
                 setUploadingProduct(true);
-                const urls: string[] = [];
-                for (const file of Array.from(e.target.files)) {
-                  const fd = new FormData();
-                  fd.set("file", file);
-                  fd.set("context", `products/${product.id}`);
-                  const res = await fetch("/api/upload", { method: "POST", body: fd });
-                  if (res.ok) { const { url } = await res.json(); urls.push(url); }
+                try {
+                  const urls: string[] = [];
+                  for (const file of Array.from(e.target.files)) {
+                    try {
+                      const fd = new FormData();
+                      fd.set("file", file);
+                      fd.set("context", `products/${product.id}`);
+                      const res = await fetch("/api/upload", { method: "POST", body: fd });
+                      if (res.ok) { const { url } = await res.json(); urls.push(url); }
+                    } catch (err) { console.error("Upload failed:", err); }
+                  }
+                  if (urls.length > 0) {
+                    const fd = new FormData();
+                    fd.set("productId", product.id);
+                    fd.set("imageUrls", JSON.stringify(urls));
+                    await uploadProductImages(fd);
+                  }
+                } finally {
+                  setUploadingProduct(false);
+                  e.target.value = "";
                 }
-                if (urls.length > 0) {
-                  const fd = new FormData();
-                  fd.set("productId", product.id);
-                  fd.set("imageUrls", JSON.stringify(urls));
-                  await uploadProductImages(fd);
-                }
-                setUploadingProduct(false);
-                e.target.value = "";
               }}
             />
           </div>
@@ -559,23 +564,28 @@ export function EditProductForm({
                           onChange={async (e) => {
                             if (!e.target.files?.length) return;
                             setUploadingVariation(color.id);
-                            const urls: string[] = [];
-                            for (const file of Array.from(e.target.files)) {
-                              const fd = new FormData();
-                              fd.set("file", file);
-                              fd.set("context", `variations/${color.id}`);
-                              const res = await fetch("/api/upload", { method: "POST", body: fd });
-                              if (res.ok) { const { url } = await res.json(); urls.push(url); }
+                            try {
+                              const urls: string[] = [];
+                              for (const file of Array.from(e.target.files)) {
+                                try {
+                                  const fd = new FormData();
+                                  fd.set("file", file);
+                                  fd.set("context", `variations/${color.id}`);
+                                  const res = await fetch("/api/upload", { method: "POST", body: fd });
+                                  if (res.ok) { const { url } = await res.json(); urls.push(url); }
+                                } catch (err) { console.error("Upload failed:", err); }
+                              }
+                              if (urls.length > 0) {
+                                const fd = new FormData();
+                                fd.set("variationId", color.id);
+                                fd.set("productId", product.id);
+                                fd.set("imageUrls", JSON.stringify(urls));
+                                await uploadVariationImages(fd);
+                              }
+                            } finally {
+                              setUploadingVariation(null);
+                              e.target.value = "";
                             }
-                            if (urls.length > 0) {
-                              const fd = new FormData();
-                              fd.set("variationId", color.id);
-                              fd.set("productId", product.id);
-                              fd.set("imageUrls", JSON.stringify(urls));
-                              await uploadVariationImages(fd);
-                            }
-                            setUploadingVariation(null);
-                            e.target.value = "";
                           }}
                         />
                       </div>

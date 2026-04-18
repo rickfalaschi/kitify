@@ -11,7 +11,7 @@ export const kitItemVariations = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     kitItemId: uuid("kit_item_id")
       .notNull()
-      .references(() => kitItems.id),
+      .references(() => kitItems.id, { onDelete: "cascade" }),
     variationType: variationTypeEnum("variation_type").notNull(),
     mode: variationModeEnum("mode").notNull(),
     defaultVariationId: uuid("default_variation_id")

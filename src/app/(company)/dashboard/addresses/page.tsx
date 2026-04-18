@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { companyAddresses } from "@/db/schema";
+import { companyAddresses, orders } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireFullAccess } from "../_lib/get-company";
@@ -55,6 +55,12 @@ export default async function AddressesPage() {
       .limit(1);
 
     if (!addr || addr.companyId !== company.id) return;
+
+    // Nullify reference in orders that use this address (preserves order history)
+    await db
+      .update(orders)
+      .set({ companyAddressId: null })
+      .where(eq(orders.companyAddressId, addressId));
 
     await db.delete(companyAddresses).where(eq(companyAddresses.id, addressId));
     revalidatePath("/dashboard/addresses");
