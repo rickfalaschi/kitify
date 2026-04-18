@@ -1,16 +1,37 @@
 "use client";
 
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
-import { LogOut, Settings, ChevronsUpDown } from "lucide-react";
+import {
+  LogOut,
+  Settings,
+  ChevronsUpDown,
+  ShieldCheck,
+  Building2,
+  Plus,
+} from "lucide-react";
 import Link from "next/link";
+
+interface ContextLink {
+  href: string;
+  label: string;
+  icon: "admin" | "companies" | "create";
+}
+
+interface UserData {
+  name: string;
+  email: string;
+}
 
 export function UserButton({
   profileHref = "/dashboard/profile",
+  contextLink,
+  user,
 }: {
   profileHref?: string;
-} = {}) {
-  const { data: session } = useSession();
+  contextLink?: ContextLink;
+  user: UserData;
+}) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -24,14 +45,18 @@ export function UserButton({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  if (!session?.user) return null;
-
-  const initials = session.user.name
+  const initials = user.name
     ?.split(" ")
     .map((n) => n[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
+
+  const contextIcons = {
+    admin: ShieldCheck,
+    companies: Building2,
+    create: Plus,
+  };
 
   return (
     <div ref={ref} className="relative">
@@ -45,10 +70,10 @@ export function UserButton({
         </div>
         <div className="flex-1 min-w-0 text-left">
           <p className="truncate text-sm font-medium text-white">
-            {session.user.name}
+            {user.name}
           </p>
           <p className="truncate text-xs text-gray-400">
-            {session.user.email}
+            {user.email}
           </p>
         </div>
         <ChevronsUpDown className="h-4 w-4 shrink-0 text-gray-500" />
@@ -56,6 +81,19 @@ export function UserButton({
 
       {open && (
         <div className="absolute bottom-full left-0 right-0 mb-1 rounded-lg border border-white/10 bg-[#12123a] py-1 shadow-xl z-50">
+          {contextLink && (() => {
+            const Icon = contextIcons[contextLink.icon];
+            return (
+              <Link
+                href={contextLink.href}
+                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/[0.06] hover:text-white transition-colors"
+                onClick={() => setOpen(false)}
+              >
+                <Icon className="h-4 w-4" />
+                {contextLink.label}
+              </Link>
+            );
+          })()}
           <Link
             href={profileHref}
             className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-300 hover:bg-white/[0.06] hover:text-white transition-colors"

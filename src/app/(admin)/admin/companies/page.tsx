@@ -31,7 +31,29 @@ export default async function CompaniesPage(props: {
         </span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allCompanies.map((company) => (
+          <Link
+            key={company.id}
+            href={`/admin/companies/${company.id}`}
+            className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+          >
+            <p className="font-medium text-gray-900">{company.name}</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Created {company.createdAt.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+            </p>
+          </Link>
+        ))}
+        {allCompanies.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {query ? "No companies match your search." : "No companies registered."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200">
             <tr>

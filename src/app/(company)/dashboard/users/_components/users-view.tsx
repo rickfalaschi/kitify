@@ -337,147 +337,250 @@ export function UsersView({
       {users.length === 0 ? (
         <p className="text-center text-gray-500 py-12">No users yet.</p>
       ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left font-medium text-gray-500 px-4 py-3">
-                    Name
-                  </th>
-                  <th className="text-left font-medium text-gray-500 px-4 py-3">
-                    Email
-                  </th>
-                  <th className="text-left font-medium text-gray-500 px-4 py-3">
-                    Permissions
-                  </th>
-                  <th className="text-left font-medium text-gray-500 px-4 py-3">
-                    Status
-                  </th>
-                  <th className="text-left font-medium text-gray-500 px-4 py-3">
-                    Joined
-                  </th>
-                  <th className="text-right font-medium text-gray-500 px-4 py-3">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => {
-                  const isCurrentUser = user.userId === currentUserId;
-                  return (
-                    <tr
-                      key={user.userId}
-                      className="border-b border-gray-100 last:border-0"
-                    >
-                      <td className="px-4 py-3 font-medium text-gray-900">
+        <>
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {users.map((user) => {
+              const isCurrentUser = user.userId === currentUserId;
+              return (
+                <div
+                  key={user.userId}
+                  className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium text-gray-900">
                         {user.name}
                         {isCurrentUser && (
-                          <span className="ml-1 text-gray-400 text-xs">
-                            (you)
-                          </span>
+                          <span className="ml-1 text-gray-400 text-xs">(you)</span>
                         )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">{user.email}</td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={
-                            user.role === "full"
-                              ? "bg-gray-900 text-white rounded-full px-2 py-0.5 text-xs"
-                              : "bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs"
+                      </p>
+                      <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                    </div>
+                    <span
+                      className={
+                        user.role === "full"
+                          ? "shrink-0 bg-gray-900 text-white rounded-full px-2 py-0.5 text-xs"
+                          : "shrink-0 bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs"
+                      }
+                    >
+                      {user.role === "full" ? "Full" : "Limited"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    {user.hasPassword ? (
+                      <span className="text-green-600">Active</span>
+                    ) : (
+                      <span className="text-orange-500">Invite pending</span>
+                    )}
+                    <span>
+                      Joined{" "}
+                      {new Date(user.createdAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </span>
+                  </div>
+                  {!isCurrentUser && (
+                    <div className="flex items-center gap-2 pt-1">
+                      <form
+                        action={async (formData) => {
+                          try {
+                            await updateUserRole(formData);
+                            toast.success("Role updated.");
+                          } catch {
+                            toast.error("Failed to update role.");
                           }
+                        }}
+                      >
+                        <input type="hidden" name="targetUserId" value={user.userId} />
+                        <select
+                          name="newRole"
+                          defaultValue={user.role}
+                          onChange={(e) => {
+                            const form = e.currentTarget.closest("form");
+                            if (form) form.requestSubmit();
+                          }}
+                          className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                         >
-                          {user.role === "full" ? "Full access" : "Limited"}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {user.hasPassword ? (
-                          <span className="text-green-600 text-xs">Active</span>
-                        ) : (
-                          <span className="text-orange-500 text-xs">
-                            Invite pending
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-gray-600">
-                        {new Date(user.createdAt).toLocaleDateString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center justify-end gap-2">
-                          <form
-                            action={async (formData) => {
-                              try {
-                                await updateUserRole(formData);
-                                toast.success("Role updated.");
-                              } catch {
-                                toast.error("Failed to update role.");
-                              }
-                            }}
-                          >
-                            <input
-                              type="hidden"
-                              name="targetUserId"
-                              value={user.userId}
-                            />
-                            <select
-                              name="newRole"
-                              defaultValue={user.role}
-                              disabled={isCurrentUser}
-                              onChange={(e) => {
-                                const form = e.currentTarget.closest("form");
-                                if (form) form.requestSubmit();
-                              }}
-                              className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <option value="full">Full access</option>
-                              <option value="limited">Limited</option>
-                            </select>
-                          </form>
-                          <form
-                            onSubmit={(e) => {
-                              if (
-                                !confirm(
-                                  "Are you sure you want to remove this user?",
-                                )
-                              )
-                                e.preventDefault();
-                            }}
-                            action={async (formData) => {
-                              try {
-                                await removeUser(formData);
-                                toast.success("User removed.");
-                              } catch {
-                                toast.error("Failed to remove user.");
-                              }
-                            }}
-                          >
-                            <input
-                              type="hidden"
-                              name="targetUserId"
-                              value={user.userId}
-                            />
-                            <button
-                              type="submit"
-                              disabled={isCurrentUser}
-                              className="inline-flex items-center justify-center rounded-lg text-red-600 text-xs font-medium h-8 px-2 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <Trash2 className="mr-1 h-3.5 w-3.5" />
-                              Remove
-                            </button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                          <option value="full">Full access</option>
+                          <option value="limited">Limited</option>
+                        </select>
+                      </form>
+                      <form
+                        onSubmit={(e) => {
+                          if (!confirm("Are you sure you want to remove this user?"))
+                            e.preventDefault();
+                        }}
+                        action={async (formData) => {
+                          try {
+                            await removeUser(formData);
+                            toast.success("User removed.");
+                          } catch {
+                            toast.error("Failed to remove user.");
+                          }
+                        }}
+                      >
+                        <input type="hidden" name="targetUserId" value={user.userId} />
+                        <button
+                          type="submit"
+                          className="inline-flex items-center justify-center rounded-lg text-red-600 text-xs font-medium h-8 px-2 hover:bg-red-50 transition-colors"
+                        >
+                          <Trash2 className="mr-1 h-3.5 w-3.5" />
+                          Remove
+                        </button>
+                      </form>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left font-medium text-gray-500 px-4 py-3">
+                      Name
+                    </th>
+                    <th className="text-left font-medium text-gray-500 px-4 py-3">
+                      Email
+                    </th>
+                    <th className="text-left font-medium text-gray-500 px-4 py-3">
+                      Permissions
+                    </th>
+                    <th className="text-left font-medium text-gray-500 px-4 py-3">
+                      Status
+                    </th>
+                    <th className="text-left font-medium text-gray-500 px-4 py-3">
+                      Joined
+                    </th>
+                    <th className="text-right font-medium text-gray-500 px-4 py-3">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((user) => {
+                    const isCurrentUser = user.userId === currentUserId;
+                    return (
+                      <tr
+                        key={user.userId}
+                        className="border-b border-gray-100 last:border-0"
+                      >
+                        <td className="px-4 py-3 font-medium text-gray-900">
+                          {user.name}
+                          {isCurrentUser && (
+                            <span className="ml-1 text-gray-400 text-xs">
+                              (you)
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={
+                              user.role === "full"
+                                ? "bg-gray-900 text-white rounded-full px-2 py-0.5 text-xs"
+                                : "bg-gray-100 text-gray-600 rounded-full px-2 py-0.5 text-xs"
+                            }
+                          >
+                            {user.role === "full" ? "Full access" : "Limited"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          {user.hasPassword ? (
+                            <span className="text-green-600 text-xs">Active</span>
+                          ) : (
+                            <span className="text-orange-500 text-xs">
+                              Invite pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">
+                          {new Date(user.createdAt).toLocaleDateString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-2">
+                            <form
+                              action={async (formData) => {
+                                try {
+                                  await updateUserRole(formData);
+                                  toast.success("Role updated.");
+                                } catch {
+                                  toast.error("Failed to update role.");
+                                }
+                              }}
+                            >
+                              <input
+                                type="hidden"
+                                name="targetUserId"
+                                value={user.userId}
+                              />
+                              <select
+                                name="newRole"
+                                defaultValue={user.role}
+                                disabled={isCurrentUser}
+                                onChange={(e) => {
+                                  const form = e.currentTarget.closest("form");
+                                  if (form) form.requestSubmit();
+                                }}
+                                className="rounded-lg border border-gray-300 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <option value="full">Full access</option>
+                                <option value="limited">Limited</option>
+                              </select>
+                            </form>
+                            <form
+                              onSubmit={(e) => {
+                                if (
+                                  !confirm(
+                                    "Are you sure you want to remove this user?",
+                                  )
+                                )
+                                  e.preventDefault();
+                              }}
+                              action={async (formData) => {
+                                try {
+                                  await removeUser(formData);
+                                  toast.success("User removed.");
+                                } catch {
+                                  toast.error("Failed to remove user.");
+                                }
+                              }}
+                            >
+                              <input
+                                type="hidden"
+                                name="targetUserId"
+                                value={user.userId}
+                              />
+                              <button
+                                type="submit"
+                                disabled={isCurrentUser}
+                                className="inline-flex items-center justify-center rounded-lg text-red-600 text-xs font-medium h-8 px-2 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                                Remove
+                              </button>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

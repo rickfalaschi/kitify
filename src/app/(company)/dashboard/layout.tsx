@@ -86,6 +86,12 @@ export default async function CompanyLayout({
             createAction={createCompanyAction}
           />
         }
+        contextLink={
+          session.user.isAdmin
+            ? { href: "/admin", label: "Admin", icon: "admin" }
+            : undefined
+        }
+        user={{ name: session.user.name ?? "", email: session.user.email ?? "" }}
       />
       <main className="flex-1 p-4 md:p-8">{children}</main>
     </div>

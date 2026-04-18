@@ -86,8 +86,43 @@ export default async function CategoriesPage() {
         </div>
       </div>
 
-      {/* Categories list */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allCategories.map((cat) => (
+          <div
+            key={cat.id}
+            className="bg-white rounded-lg border border-gray-200 p-4 flex items-center justify-between gap-3"
+          >
+            <div className="min-w-0">
+              <p className="font-medium text-gray-900">{cat.name}</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {cat.productCount} {cat.productCount === 1 ? "product" : "products"}
+              </p>
+            </div>
+            <ConfirmForm
+              action={deleteCategory}
+              message={`Delete category "${cat.name}"? It will be removed from all associated products.`}
+            >
+              <input type="hidden" name="categoryId" value={cat.id} />
+              <SubmitButton
+                variant="secondary"
+                className="text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-8 px-2"
+              >
+                <Trash2 className="mr-1 h-3.5 w-3.5" />
+                Delete
+              </SubmitButton>
+            </ConfirmForm>
+          </div>
+        ))}
+        {allCategories.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            No categories yet. Create one above.
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200">
             <tr>

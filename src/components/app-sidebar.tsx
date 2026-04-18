@@ -43,14 +43,27 @@ export interface NavItem {
   children?: SubNavItem[];
 }
 
+interface ContextLink {
+  href: string;
+  label: string;
+  icon: "admin" | "companies" | "create";
+}
+
+interface UserData {
+  name: string;
+  email: string;
+}
+
 interface AppSidebarProps {
   title: string;
   items: NavItem[];
   topSlot?: React.ReactNode;
   profileHref?: string;
+  contextLink?: ContextLink;
+  user: UserData;
 }
 
-export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarProps) {
+export function AppSidebar({ title, items, topSlot, profileHref, contextLink, user }: AppSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -151,7 +164,7 @@ export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarPro
           </ul>
         </nav>
         <div className="relative border-t border-white/10 p-3 overflow-visible">
-          <UserButton profileHref={profileHref} />
+          <UserButton profileHref={profileHref} contextLink={contextLink} user={user} />
         </div>
       </div>
     </>
@@ -160,11 +173,11 @@ export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarPro
   return (
     <>
       {/* Mobile top bar */}
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-[#0a0a23] px-4 py-3 md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-700 hover:bg-gray-100 transition-colors"
+          className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-300 hover:bg-white/10 transition-colors"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -173,7 +186,7 @@ export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarPro
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/kitify-logo.svg" alt="Kitify" className="h-7 w-auto" />
           {title !== "Kitify" && (
-            <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+            <span className="text-xs font-semibold uppercase tracking-widest text-gray-400">
               {title.replace(/^Kitify\s*/, "")}
             </span>
           )}

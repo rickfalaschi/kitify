@@ -52,7 +52,11 @@ export default async function LogosPage() {
     if (!logo || logo.companyId !== company.id) return;
 
     const urlParts = logo.fileUrl.split("/");
-    const key = urlParts.slice(urlParts.indexOf("logos")).join("/");
+    const logosIndex = urlParts.indexOf("logos");
+    if (logosIndex === -1) {
+      throw new Error("Could not determine file path for deletion.");
+    }
+    const key = urlParts.slice(logosIndex).join("/");
     await deleteFile(key);
 
     await db.delete(companyLogos).where(eq(companyLogos.id, logoId));

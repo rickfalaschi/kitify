@@ -19,6 +19,7 @@ import {
   BookOpen,
   ShoppingBag,
 } from "lucide-react";
+import { MobileHomeMenu } from "./_components/mobile-home-menu";
 
 export default function HomePage() {
   return (
@@ -62,10 +63,10 @@ function Header() {
             Use cases
           </a>
         </nav>
-        <div className="flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           <Link
             href="/login"
-            className="hidden sm:inline-flex items-center justify-center rounded-full text-gray-200 text-sm font-medium px-4 h-9 hover:text-white transition-colors"
+            className="inline-flex items-center justify-center rounded-full text-gray-200 text-sm font-medium px-4 h-9 hover:text-white transition-colors"
           >
             Sign in
           </Link>
@@ -76,6 +77,7 @@ function Header() {
             Get started
           </Link>
         </div>
+        <MobileHomeMenu />
       </div>
     </header>
   );

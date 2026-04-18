@@ -153,7 +153,63 @@ export default async function OrdersPage(props: {
         <span className="text-sm text-gray-500">{totalCount} orders</span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allOrders.map((order) => (
+          <div
+            key={order.id}
+            className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900">{order.companyName}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{order.kitName}</p>
+              </div>
+              <span
+                className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[order.status]}`}
+              >
+                {statusLabels[order.status]}
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <span>{order.deliveryType === "company_address" ? "Company address" : "Employee address"}</span>
+              <span>{order.createdAt.toLocaleDateString("en-GB")}</span>
+            </div>
+            <form
+              action={updateOrderStatusAction}
+              className="flex items-center gap-2"
+            >
+              <input type="hidden" name="orderId" value={order.id} />
+              <select
+                name="status"
+                defaultValue={order.status}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              >
+                {allStatuses.map((s) => (
+                  <option key={s} value={s}>
+                    {statusLabels[s]}
+                  </option>
+                ))}
+              </select>
+              <SubmitButton variant="secondary" className="text-xs h-8 px-3">Save</SubmitButton>
+            </form>
+            <Link
+              href={`/admin/orders/${order.id}`}
+              className="block text-sm text-gray-500 underline hover:text-gray-900"
+            >
+              View details
+            </Link>
+          </div>
+        ))}
+        {allOrders.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {filterStatus ? "No orders with this status." : "No orders registered."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200">
             <tr>

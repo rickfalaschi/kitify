@@ -118,7 +118,58 @@ export default async function OrdersPage(props: {
         </p>
       ) : (
         <>
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          {/* Mobile cards */}
+          <div className="space-y-3 md:hidden">
+            {companyOrders.map(({ order, kit }) => (
+              <div
+                key={order.id}
+                className="bg-white rounded-lg border border-gray-200 p-4 space-y-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    href={`/dashboard/orders/${order.id}`}
+                    className="font-medium text-gray-900 hover:underline"
+                  >
+                    {kit.name}
+                  </Link>
+                  <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}>
+                    {ORDER_STATUS_LABELS[order.status]}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs text-gray-500">
+                  <span>{deliveryLabels[order.deliveryType]}</span>
+                  <span>{new Date(order.createdAt).toLocaleDateString("en-GB")}</span>
+                </div>
+                <div className="flex items-center gap-2 pt-1">
+                  {order.status === "awaiting_payment" && (
+                    <a href={`/dashboard/orders/${order.id}/pay`} className="text-xs text-amber-700 underline font-medium hover:text-amber-900">Pay Now</a>
+                  )}
+                  {order.status === "pending" && order.publicToken && (
+                    <Link
+                      href={`/dashboard/orders/pre-order/${order.id}`}
+                      className="text-xs text-orange-600 hover:text-orange-800 underline"
+                    >
+                      View Link
+                    </Link>
+                  )}
+                  {canCompanyCancel(order.status) && (
+                    <ConfirmForm action={cancelOrder} message="Are you sure you want to cancel this order?">
+                      <input type="hidden" name="orderId" value={order.id} />
+                      <SubmitButton
+                        variant="secondary"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-7 px-2"
+                      >
+                        Cancel
+                      </SubmitButton>
+                    </ConfirmForm>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table */}
+          <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead className="border-b border-gray-200">
                 <tr>

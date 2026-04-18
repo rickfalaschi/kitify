@@ -221,7 +221,9 @@ export default async function NewOrderPage(props: {
     const kitIdValue = formData.get("kitId") as string;
     const selectionsJson = formData.get("selections_json") as string;
 
-    if (!deliveryType || !kitIdValue) return;
+    if (!deliveryType || !kitIdValue) {
+      throw new Error("Missing delivery information. Please try again.");
+    }
 
     // For direct orders (not pre-orders), validate the delivery details up
     // front. Pre-orders intentionally allow blank employee fields because the
@@ -248,7 +250,7 @@ export default async function NewOrderPage(props: {
     try {
       selections = selectionsJson ? JSON.parse(selectionsJson) : {};
     } catch {
-      return;
+      throw new Error("Invalid selection data. Please try again.");
     }
 
     // Re-fetch kit items WITH product data for snapshot

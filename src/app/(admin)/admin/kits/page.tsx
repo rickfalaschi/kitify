@@ -86,7 +86,49 @@ export default async function AdminKitsPage(props: {
         </span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allKits.map((kit) => {
+          const kitStatus = statusConfig[kit.status] || statusConfig.pending;
+          return (
+            <Link
+              key={kit.id}
+              href={`/admin/kits/${kit.id}`}
+              className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-medium text-gray-900">{kit.name}</p>
+                  <p className="text-sm text-gray-500 mt-0.5">{kit.companyName}</p>
+                </div>
+                <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${kitStatus.className}`}>
+                  {kitStatus.label}
+                </span>
+              </div>
+              <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                <span>{countMap[kit.id] || 0} items</span>
+                <span>
+                  {new Date(kit.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+        {allKits.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {query || isValidStatus
+              ? "No kits match your filters."
+              : "No kits created yet."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>

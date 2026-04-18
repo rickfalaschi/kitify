@@ -79,7 +79,56 @@ export default async function ProductsPage(props: {
         </span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allProducts.map((product) => (
+          <Link
+            key={product.id}
+            href={`/admin/products/${product.id}`}
+            className="block bg-white rounded-lg border border-gray-200 p-4 hover:border-gray-300 transition-colors"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900">{product.name}</p>
+                <p className="text-sm text-gray-600 mt-0.5">
+                  £{Number(product.basePrice).toFixed(2)}
+                </p>
+              </div>
+              <span
+                className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                  product.active
+                    ? "bg-green-100 text-green-700"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {product.active ? "Active" : "Inactive"}
+              </span>
+            </div>
+            {categoriesByProduct[product.id]?.length ? (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {categoriesByProduct[product.id].map((name) => (
+                  <span
+                    key={name}
+                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600"
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </Link>
+        ))}
+        {allProducts.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {validCategoryId
+              ? "No products in this category."
+              : "No products registered."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200">
             <tr>

@@ -121,7 +121,79 @@ export default async function AdminUsersPage(props: {
         </span>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      {/* Mobile cards */}
+      <div className="space-y-3 md:hidden">
+        {allUsers.map((user) => (
+          <div
+            key={user.id}
+            className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-medium text-gray-900">{user.name}</p>
+                <p className="text-sm text-gray-500 truncate">{user.email}</p>
+              </div>
+              {user.id === currentUserId ? (
+                <span className="shrink-0 inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700">
+                  You (admin)
+                </span>
+              ) : user.isAdmin ? (
+                <span className="shrink-0 inline-flex items-center rounded-full bg-gray-900 px-2.5 py-1 text-xs font-medium text-white">
+                  Admin
+                </span>
+              ) : null}
+            </div>
+            {companiesByUser[user.id]?.length ? (
+              <p className="text-sm text-gray-600">
+                {companiesByUser[user.id].join(", ")}
+              </p>
+            ) : (
+              <p className="text-sm text-gray-400">No companies</p>
+            )}
+            {user.id !== currentUserId && (
+              <div className="flex items-center gap-2 pt-1">
+                <form action={toggleAdmin} className="inline">
+                  <input type="hidden" name="userId" value={user.id} />
+                  <input
+                    type="hidden"
+                    name="makeAdmin"
+                    value={user.isAdmin ? "false" : "true"}
+                  />
+                  <SubmitButton
+                    variant={user.isAdmin ? "primary" : "secondary"}
+                    className="text-xs h-8 px-3"
+                  >
+                    {user.isAdmin ? "Admin — revoke" : "Make admin"}
+                  </SubmitButton>
+                </form>
+                <ConfirmForm
+                  action={deleteUser}
+                  message="Are you sure you want to delete this user?"
+                >
+                  <input type="hidden" name="userId" value={user.id} />
+                  <SubmitButton
+                    variant="secondary"
+                    className="text-red-600 hover:bg-red-50 hover:text-red-700 text-xs h-8 px-2"
+                  >
+                    <Trash2 className="mr-1 h-3.5 w-3.5" />
+                    Delete
+                  </SubmitButton>
+                </ConfirmForm>
+              </div>
+            )}
+          </div>
+        ))}
+        {allUsers.length === 0 && (
+          <p className="text-center text-gray-500 py-8">
+            {query || isValidFilter
+              ? "No users match your filters."
+              : "No users registered."}
+          </p>
+        )}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden md:block bg-white rounded-lg border border-gray-200 overflow-hidden">
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200">
             <tr>

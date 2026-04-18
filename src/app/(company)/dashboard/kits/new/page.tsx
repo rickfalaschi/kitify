@@ -110,10 +110,17 @@ export default async function NewKitPage() {
 
     if (!name || !itemsJson) return;
 
-    const items: KitItemInput[] = JSON.parse(itemsJson);
+    let items: KitItemInput[];
+    try {
+      items = JSON.parse(itemsJson);
+    } catch {
+      throw new Error("Invalid kit data. Please try again.");
+    }
     const validItems = items.filter((item) => item.quantity > 0);
 
-    if (validItems.length === 0) return;
+    if (validItems.length === 0) {
+      throw new Error("Please add at least one product to the kit.");
+    }
 
     const [kit] = await db
       .insert(kits)
