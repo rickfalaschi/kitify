@@ -39,6 +39,7 @@ export const orders = pgTable("orders", {
   stripePaymentIntentId: varchar("stripe_payment_intent_id", { length: 255 }),
   totalAmount: numeric("total_amount", { precision: 10, scale: 2 }),
   shippingCost: numeric("shipping_cost", { precision: 10, scale: 2 }),
+  description: varchar("description", { length: 500 }),
   employeeName: varchar("employee_name", { length: 255 }),
   employeeEmail: varchar("employee_email", { length: 255 }),
   employeeAddressLine1: varchar("employee_address_line_1", { length: 255 }),

@@ -23,7 +23,7 @@ import { getCompany } from "../../_lib/get-company";
 import { calculateOrderTotal } from "@/lib/calculate-order-total";
 import { OrderForm } from "./_components/order-form";
 import { recordOrderStatusChange } from "@/lib/record-order-status-change";
-import { sendShippingQuoteRequestEmail } from "@/lib/email";
+import { sendShippingQuoteRequestEmail, sendPreOrderEmail } from "@/lib/email";
 
 export default async function NewOrderPage(props: {
   searchParams: Promise<{ kitId?: string }>;
@@ -363,121 +363,175 @@ export default async function NewOrderPage(props: {
       allowedMap.set(c.config.id, allowed);
     }
 
-    const values: typeof orders.$inferInsert = {
-      companyId: company.id,
-      kitId: kitIdValue,
-      userId,
-      deliveryType: deliveryType as "company_address" | "employee_address",
-    };
+    // Read description
+    const description =
+      ((formData.get("description") as string) || "").trim() || null;
 
+    // Pre-order emails
+    const bulkEmailsJson = formData.get("bulk_emails_json") as string;
+    let preorderEmails: string[] = [];
     if (isPreorder) {
-      values.status = "pending";
-      values.publicToken = randomBytes(32).toString("hex");
-      // Public pre-order links expire after 30 days so stale links can't be
-      // used to confirm orders indefinitely.
-      values.publicTokenExpiresAt = new Date(
-        Date.now() + 30 * 24 * 60 * 60 * 1000,
-      );
+      try {
+        preorderEmails = bulkEmailsJson ? JSON.parse(bulkEmailsJson) : [];
+      } catch {
+        preorderEmails = [];
+      }
+      if (preorderEmails.length === 0) {
+        throw new Error("Please add at least one email for the pre-order.");
+      }
     }
 
-    if (deliveryType === "company_address") {
-      values.companyAddressId = formData.get("companyAddressId") as string;
-    } else {
-      // For pre-orders with employee_address, address fields are optional
-      values.employeeName =
-        (formData.get("employeeName") as string) || (isPreorder ? null : undefined) as string | null | undefined;
-      values.employeeAddressLine1 =
-        (formData.get("employeeAddressLine1") as string) || (isPreorder ? null : undefined) as string | null | undefined;
-      values.employeeAddressLine2 =
-        (formData.get("employeeAddressLine2") as string) || null;
-      values.employeeCity =
-        (formData.get("employeeCity") as string) || (isPreorder ? null : undefined) as string | null | undefined;
-      values.employeeCounty =
-        (formData.get("employeeCounty") as string) || null;
-      values.employeePostcode =
-        (formData.get("employeePostcode") as string) || (isPreorder ? null : undefined) as string | null | undefined;
-      values.employeeCountry =
-        (formData.get("employeeCountry") as string) || "United Kingdom";
-    }
+    // Helper: build base order values
+    function buildBaseValues() {
+      const vals: typeof orders.$inferInsert = {
+        companyId: company.id,
+        kitId: kitIdValue,
+        userId,
+        deliveryType: deliveryType as "company_address" | "employee_address",
+        description,
+      };
 
-    const [newOrder] = await db.insert(orders).values(values).returning();
-
-    // 1) Snapshot kit items into order_items
-    const orderItemRows: (typeof orderItems.$inferInsert)[] = currentItems.map(
-      (row, idx) => ({
-        orderId: newOrder.id,
-        productName: row.product.name,
-        productImageUrl: row.product.imageUrl,
-        basePrice: row.product.basePrice,
-        quantity: row.kitItem.quantity,
-        productId: row.product.id,
-        kitItemId: row.kitItem.id,
-        sortOrder: idx,
-      }),
-    );
-    const insertedOrderItems =
-      orderItemRows.length > 0
-        ? await db.insert(orderItems).values(orderItemRows).returning()
-        : [];
-    const orderItemByKitItemId = new Map<string, string>();
-    for (const oi of insertedOrderItems) {
-      if (oi.kitItemId) orderItemByKitItemId.set(oi.kitItemId, oi.id);
-    }
-
-    // 2) Insert order item selections with snapshot data
-    const selectionInserts: (typeof orderItemSelections.$inferInsert)[] = [];
-
-    for (const c of currentConfigs) {
-      const kitItemId = c.config.kitItemId;
-      const variationType = c.config.variationType;
-      const allowed = allowedMap.get(c.config.id);
-
-      let chosenVariationId: string;
-
-      if (c.config.mode === "fixed") {
-        chosenVariationId = c.config.defaultVariationId;
+      if (deliveryType === "company_address") {
+        vals.companyAddressId = formData.get("companyAddressId") as string;
       } else {
-        // Editable: use user selection or fall back to default
-        const userChoice = selections[kitItemId]?.[variationType];
-        if (userChoice && allowed?.has(userChoice)) {
-          chosenVariationId = userChoice;
-        } else {
-          // For pre-orders, skip editable selections that have no user choice
-          if (isPreorder && !userChoice) continue;
-          chosenVariationId = c.config.defaultVariationId;
-        }
+        vals.employeeName =
+          (formData.get("employeeName") as string) ||
+          ((isPreorder ? null : undefined) as string | null | undefined);
+        vals.employeeAddressLine1 =
+          (formData.get("employeeAddressLine1") as string) ||
+          ((isPreorder ? null : undefined) as string | null | undefined);
+        vals.employeeAddressLine2 =
+          (formData.get("employeeAddressLine2") as string) || null;
+        vals.employeeCity =
+          (formData.get("employeeCity") as string) ||
+          ((isPreorder ? null : undefined) as string | null | undefined);
+        vals.employeeCounty =
+          (formData.get("employeeCounty") as string) || null;
+        vals.employeePostcode =
+          (formData.get("employeePostcode") as string) ||
+          ((isPreorder ? null : undefined) as string | null | undefined);
+        vals.employeeCountry =
+          (formData.get("employeeCountry") as string) || "United Kingdom";
       }
 
-      const orderItemId = orderItemByKitItemId.get(kitItemId);
-      const snapshot = variationInfo.get(chosenVariationId);
-      if (!orderItemId || !snapshot) continue;
-
-      selectionInserts.push({
-        orderItemId,
-        variationType: snapshot.type,
-        variationValue: snapshot.value,
-        priceAdjustment: snapshot.priceAdjustment,
-        variationId: chosenVariationId,
-      });
+      return vals;
     }
 
-    if (selectionInserts.length > 0) {
-      await db.insert(orderItemSelections).values(selectionInserts);
+    // Helper: snapshot kit items + selections into a given order
+    async function snapshotOrderItems(orderId: string) {
+      const orderItemRows: (typeof orderItems.$inferInsert)[] =
+        currentItems.map((row, idx) => ({
+          orderId,
+          productName: row.product.name,
+          productImageUrl: row.product.imageUrl,
+          basePrice: row.product.basePrice,
+          quantity: row.kitItem.quantity,
+          productId: row.product.id,
+          kitItemId: row.kitItem.id,
+          sortOrder: idx,
+        }));
+      const insertedOrderItems =
+        orderItemRows.length > 0
+          ? await db.insert(orderItems).values(orderItemRows).returning()
+          : [];
+      const orderItemByKitItemId = new Map<string, string>();
+      for (const oi of insertedOrderItems) {
+        if (oi.kitItemId) orderItemByKitItemId.set(oi.kitItemId, oi.id);
+      }
+
+      const selectionInserts: (typeof orderItemSelections.$inferInsert)[] = [];
+      for (const c of currentConfigs) {
+        const kitItemId = c.config.kitItemId;
+        const variationType = c.config.variationType;
+        const allowed = allowedMap.get(c.config.id);
+        let chosenVariationId: string;
+
+        if (c.config.mode === "fixed") {
+          chosenVariationId = c.config.defaultVariationId;
+        } else {
+          const userChoice = selections[kitItemId]?.[variationType];
+          if (userChoice && allowed?.has(userChoice)) {
+            chosenVariationId = userChoice;
+          } else {
+            if (isPreorder && !userChoice) continue;
+            chosenVariationId = c.config.defaultVariationId;
+          }
+        }
+
+        const orderItemId = orderItemByKitItemId.get(kitItemId);
+        const snapshot = variationInfo.get(chosenVariationId);
+        if (!orderItemId || !snapshot) continue;
+
+        selectionInserts.push({
+          orderItemId,
+          variationType: snapshot.type,
+          variationValue: snapshot.value,
+          priceAdjustment: snapshot.priceAdjustment,
+          variationId: chosenVariationId,
+        });
+      }
+
+      if (selectionInserts.length > 0) {
+        await db.insert(orderItemSelections).values(selectionInserts);
+      }
     }
 
+    // --- Pre-order flow ---
     if (isPreorder) {
-      // Record initial state for pre-orders (they'll stay in "pending" until
-      // the employee completes the public form).
-      await recordOrderStatusChange({
-        orderId: newOrder.id,
-        fromStatus: null,
-        toStatus: "pending",
-        changedByUserId: userId,
-        reason: "Pre-order created",
-      });
+      const [kitData] = await db
+        .select({ name: kits.name })
+        .from(kits)
+        .where(eq(kits.id, kitIdValue))
+        .limit(1);
+
+      let lastOrderId = "";
+
+      for (const email of preorderEmails) {
+        const vals = buildBaseValues();
+        vals.status = "pending";
+        vals.publicToken = randomBytes(32).toString("hex");
+        vals.publicTokenExpiresAt = new Date(
+          Date.now() + 30 * 24 * 60 * 60 * 1000,
+        );
+        vals.employeeEmail = email.trim();
+
+        const [newOrder] = await db.insert(orders).values(vals).returning();
+        await snapshotOrderItems(newOrder.id);
+        lastOrderId = newOrder.id;
+
+        await recordOrderStatusChange({
+          orderId: newOrder.id,
+          fromStatus: null,
+          toStatus: "pending",
+          changedByUserId: userId,
+          reason: "Pre-order created",
+        });
+
+        const publicUrl = `${process.env.AUTH_URL || "http://localhost:3000"}/p/${newOrder.publicToken}`;
+        sendPreOrderEmail({
+          to: email.trim(),
+          companyName: company.name,
+          kitName: kitData?.name || "Kit",
+          publicUrl,
+        }).catch((err) =>
+          console.error("sendPreOrderEmail failed", err),
+        );
+      }
+
       revalidatePath("/dashboard/orders");
-      redirect(`/dashboard/orders/pre-order/${newOrder.id}`);
+      // Single pre-order → show the pre-order detail; multiple → go to orders list
+      if (preorderEmails.length === 1) {
+        redirect(`/dashboard/orders/pre-order/${lastOrderId}`);
+      } else {
+        redirect("/dashboard/orders");
+      }
     }
+
+    // --- Direct order flow ---
+    const values = buildBaseValues();
+
+    const [newOrder] = await db.insert(orders).values(values).returning();
+    await snapshotOrderItems(newOrder.id);
 
     // Determine if UK or international
     let isUK = true;

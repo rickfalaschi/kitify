@@ -127,7 +127,7 @@ export function EditProductForm({
             <form action={updateProduct} className="space-y-4">
               <input type="hidden" name="id" value={product.id} />
 
-              <div className="grid grid-cols-[1fr_auto] gap-3">
+              <div className="grid grid-cols-[1fr_140px] gap-3">
                 <div className="space-y-2">
                   <label
                     htmlFor="name"
@@ -156,7 +156,7 @@ export function EditProductForm({
                     defaultValue={product.code ?? ""}
                     placeholder="e.g. TSH-001"
                     maxLength={50}
-                    className="w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
               </div>

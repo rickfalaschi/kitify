@@ -126,12 +126,17 @@ export default async function OrdersPage(props: {
                 className="bg-white rounded-lg border border-gray-200 p-4 space-y-2"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <Link
-                    href={`/dashboard/orders/${order.id}`}
-                    className="font-medium text-gray-900 hover:underline"
-                  >
-                    {kit.name}
-                  </Link>
+                  <div>
+                    <Link
+                      href={`/dashboard/orders/${order.id}`}
+                      className="font-medium text-gray-900 hover:underline"
+                    >
+                      {kit.name}
+                    </Link>
+                    {order.description && (
+                      <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{order.description}</p>
+                    )}
+                  </div>
                   <span className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}>
                     {ORDER_STATUS_LABELS[order.status]}
                   </span>
@@ -191,6 +196,9 @@ export default async function OrdersPage(props: {
                         >
                           {kit.name}
                         </Link>
+                        {order.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">{order.description}</p>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${ORDER_STATUS_COLORS[order.status]}`}>

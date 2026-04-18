@@ -119,6 +119,7 @@ export default async function OrdersPage(props: {
       status: orders.status,
       deliveryType: orders.deliveryType,
       createdAt: orders.createdAt,
+      description: orders.description,
       companyName: companies.name,
       kitName: kits.name,
     })
@@ -164,6 +165,9 @@ export default async function OrdersPage(props: {
               <div className="min-w-0">
                 <p className="font-medium text-gray-900">{order.companyName}</p>
                 <p className="text-sm text-gray-500 mt-0.5">{order.kitName}</p>
+                {order.description && (
+                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{order.description}</p>
+                )}
               </div>
               <span
                 className={`shrink-0 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[order.status]}`}
@@ -230,6 +234,9 @@ export default async function OrdersPage(props: {
                 </td>
                 <td className="py-3 px-4 text-gray-600">
                   {order.kitName}
+                  {order.description && (
+                    <p className="text-xs text-gray-400 mt-0.5 line-clamp-1">{order.description}</p>
+                  )}
                 </td>
                 <td className="py-3 px-4">
                   <span

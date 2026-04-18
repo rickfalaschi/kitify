@@ -240,6 +240,14 @@ export default async function OrderDetailPage(props: {
                 {new Date(order.createdAt).toLocaleDateString("en-US")}
               </span>
             </div>
+            {order.description && (
+              <div className="flex justify-between">
+                <span className="text-gray-500">Description</span>
+                <span className="font-medium text-gray-900 text-right max-w-[60%]">
+                  {order.description}
+                </span>
+              </div>
+            )}
             {order.shippingCost && (
               <div className="flex justify-between">
                 <span className="text-gray-500">Shipping</span>

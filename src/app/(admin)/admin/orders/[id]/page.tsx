@@ -229,6 +229,7 @@ export default async function OrderDetailPage(props: {
       employeeEmail: orders.employeeEmail,
       stripePaymentIntentId: orders.stripePaymentIntentId,
       totalAmount: orders.totalAmount,
+      description: orders.description,
       createdAt: orders.createdAt,
       companyName: companies.name,
       kitName: kits.name,
@@ -340,6 +341,12 @@ export default async function OrderDetailPage(props: {
                   {order.createdAt.toLocaleDateString("en-US")}
                 </p>
               </div>
+              {order.description && (
+                <div>
+                  <span className="text-gray-500">Description</span>
+                  <p className="font-medium text-gray-900">{order.description}</p>
+                </div>
+              )}
               <div>
                 <span className="text-gray-500">Delivery Type</span>
                 <p className="font-medium text-gray-900">
