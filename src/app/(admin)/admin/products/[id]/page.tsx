@@ -37,6 +37,7 @@ async function updateProduct(formData: FormData) {
   "use server";
   await requireAdmin();
   const id = formData.get("id") as string;
+  const code = (formData.get("code") as string)?.trim() || null;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const basePrice = formData.get("basePrice") as string;
@@ -45,6 +46,7 @@ async function updateProduct(formData: FormData) {
   await db
     .update(products)
     .set({
+      code,
       name,
       description: description || null,
       basePrice,
@@ -354,6 +356,7 @@ export default async function EditProductPage(props: {
     <EditProductForm
       product={{
         id: product.id,
+        code: product.code,
         name: product.name,
         description: product.description,
         basePrice: product.basePrice,

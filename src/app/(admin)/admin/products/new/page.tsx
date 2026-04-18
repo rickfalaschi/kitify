@@ -10,6 +10,7 @@ async function createProductAction(formData: FormData) {
   const session = await auth();
   if (!session || !session.user.isAdmin) redirect("/login");
 
+  const code = (formData.get("code") as string)?.trim() || null;
   const name = formData.get("name") as string;
   const description = formData.get("description") as string;
   const basePrice = formData.get("basePrice") as string;
@@ -19,6 +20,7 @@ async function createProductAction(formData: FormData) {
   const [newProduct] = await db
     .insert(products)
     .values({
+      code: code || undefined,
       name,
       description: description || null,
       basePrice,

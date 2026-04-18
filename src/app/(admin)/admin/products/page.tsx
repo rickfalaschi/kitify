@@ -91,6 +91,9 @@ export default async function ProductsPage(props: {
               <div className="min-w-0">
                 <p className="font-medium text-gray-900">{product.name}</p>
                 <p className="text-sm text-gray-600 mt-0.5">
+                  {product.code && (
+                    <span className="text-gray-400 mr-2">{product.code}</span>
+                  )}
                   £{Number(product.basePrice).toFixed(2)}
                 </p>
               </div>
@@ -133,6 +136,7 @@ export default async function ProductsPage(props: {
           <thead className="border-b border-gray-200">
             <tr>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">Name</th>
+              <th className="text-left py-3 px-4 text-gray-500 font-medium">Code</th>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">Categories</th>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">Base Price</th>
               <th className="text-left py-3 px-4 text-gray-500 font-medium">Status</th>
@@ -144,6 +148,9 @@ export default async function ProductsPage(props: {
               <tr key={product.id} className="border-b border-gray-100 last:border-0">
                 <td className="py-3 px-4 font-medium text-gray-900">
                   {product.name}
+                </td>
+                <td className="py-3 px-4 text-gray-500 text-xs font-mono">
+                  {product.code || <span className="text-gray-300">—</span>}
                 </td>
                 <td className="py-3 px-4">
                   {categoriesByProduct[product.id]?.length ? (

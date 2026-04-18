@@ -64,6 +64,10 @@ export function CreateProductForm({
     // Pass product data + uploaded URLs to server action
     const formData = new FormData();
     formData.set(
+      "code",
+      (form.elements.namedItem("code") as HTMLInputElement).value,
+    );
+    formData.set(
       "name",
       (form.elements.namedItem("name") as HTMLInputElement).value,
     );
@@ -90,17 +94,31 @@ export function CreateProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <label htmlFor="name" className="text-sm font-medium text-gray-700">
-          Name
-        </label>
-        <input
-          id="name"
-          name="name"
-          required
-          placeholder="Product name"
-          className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-        />
+      <div className="grid grid-cols-[1fr_auto] gap-3">
+        <div className="space-y-2">
+          <label htmlFor="name" className="text-sm font-medium text-gray-700">
+            Name
+          </label>
+          <input
+            id="name"
+            name="name"
+            required
+            placeholder="Product name"
+            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          />
+        </div>
+        <div className="space-y-2">
+          <label htmlFor="code" className="text-sm font-medium text-gray-700">
+            Code
+          </label>
+          <input
+            id="code"
+            name="code"
+            placeholder="e.g. TSH-001"
+            maxLength={50}
+            className="w-32 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          />
+        </div>
       </div>
       <div className="space-y-2">
         <label

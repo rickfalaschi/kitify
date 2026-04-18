@@ -78,6 +78,13 @@
       "when": 1776349000000,
       "tag": "0010_add_cancelled_status",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1776350000000,
+      "tag": "0011_add_product_code",
+      "breakpoints": true
     }
   ]
 }
