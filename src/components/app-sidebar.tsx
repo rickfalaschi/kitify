@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Menu, X } from "lucide-react";
 import {
   LayoutDashboard,
   Package,
@@ -50,9 +52,23 @@ interface AppSidebarProps {
 
 export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarProps) {
   const pathname = usePathname();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  return (
-    <aside className="hidden md:flex md:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[#0a0a23] relative overflow-hidden">
+  // Close mobile drawer on navigation
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+      return () => { document.body.style.overflow = ""; };
+    }
+  }, [mobileOpen]);
+
+  const sidebarContent = (
+    <>
       {/* Subtle red glow at bottom */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -85,7 +101,6 @@ export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarPro
           <ul className="space-y-0.5 px-3">
             {items.map((item) => {
               const Icon = iconMap[item.icon];
-              // Count path segments to avoid "/admin" matching "/admin/products"
               const hrefSegments = item.href.split("/").filter(Boolean).length;
               const isExactMatch = pathname === item.href;
               const isSubRoute = hrefSegments >= 2 && pathname.startsWith(item.href + "/") && !item.children?.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
@@ -139,6 +154,59 @@ export function AppSidebar({ title, items, topSlot, profileHref }: AppSidebarPro
           <UserButton profileHref={profileHref} />
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* Mobile top bar */}
+      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+        <button
+          type="button"
+          onClick={() => setMobileOpen(true)}
+          className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-700 hover:bg-gray-100 transition-colors"
+          aria-label="Open menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <Link href="/" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/kitify-logo.svg" alt="Kitify" className="h-7 w-auto" />
+          {title !== "Kitify" && (
+            <span className="text-xs font-semibold uppercase tracking-widest text-gray-500">
+              {title.replace(/^Kitify\s*/, "")}
+            </span>
+          )}
+        </Link>
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setMobileOpen(false)}
+          />
+          {/* Drawer */}
+          <aside className="relative flex flex-col w-72 h-full bg-[#0a0a23] overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(false)}
+              className="absolute right-3 top-4 z-20 rounded-lg p-1.5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="h-5 w-5" />
+            </button>
+            {sidebarContent}
+          </aside>
+        </div>
+      )}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden md:flex md:flex-col w-64 shrink-0 h-screen sticky top-0 bg-[#0a0a23] relative overflow-hidden">
+        {sidebarContent}
+      </aside>
+    </>
   );
 }
