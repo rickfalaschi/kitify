@@ -3,6 +3,7 @@ import {
   products,
   productImages,
   productVariations,
+  variationImages,
   categories,
   productCategories,
   kits,
@@ -10,7 +11,7 @@ import {
   kitItemVariations,
   kitItemVariationOptions,
 } from "@/db/schema";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { ArrowLeft } from "lucide-react";
@@ -68,7 +69,7 @@ export default async function NewKitPage() {
   const allCategories = await db
     .select()
     .from(categories)
-    .orderBy(categories.name);
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
 
   const allProductCategories = await db
     .select({
@@ -85,7 +86,33 @@ export default async function NewKitPage() {
     return acc;
   }, {});
 
+  // Fetch ALL product images (for detail view)
+  const allProductImagesFull = allProductImages.reduce<
+    Record<string, string[]>
+  >((acc, img) => {
+    if (!acc[img.productId]) acc[img.productId] = [];
+    acc[img.productId].push(img.imageUrl);
+    return acc;
+  }, {});
+
   const allVariations = await db.select().from(productVariations);
+
+  // Fetch variation images (for detail view)
+  const allVariationImages = await db
+    .select({
+      variationId: variationImages.variationId,
+      imageUrl: variationImages.imageUrl,
+    })
+    .from(variationImages)
+    .orderBy(asc(variationImages.sortOrder));
+
+  const variationImagesByVariation = allVariationImages.reduce<
+    Record<string, string[]>
+  >((acc, img) => {
+    if (!acc[img.variationId]) acc[img.variationId] = [];
+    acc[img.variationId].push(img.imageUrl);
+    return acc;
+  }, {});
 
   const variationsByProduct = allVariations.reduce(
     (acc, v) => {
@@ -191,7 +218,9 @@ export default async function NewKitPage() {
       <KitBuilderForm
         products={allProducts}
         variationsByProduct={variationsByProduct}
-        categories={allCategories.map((c) => ({ id: c.id, name: c.name }))}
+        productImagesByProduct={allProductImagesFull}
+        variationImagesByVariation={variationImagesByVariation}
+        categories={allCategories.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId }))}
         categoriesByProduct={categoriesByProduct}
         createKit={createKit}
       />

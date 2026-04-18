@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 
 interface CreateProductFormProps {
   createProductAction: (formData: FormData) => Promise<void>;
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; parentId: string | null }[];
 }
 
 export function CreateProductForm({
@@ -136,29 +136,62 @@ export function CreateProductForm({
       </div>
 
       {/* Categories */}
-      {categories.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            Categories
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.id}
-                type="button"
-                onClick={() => toggleCategory(cat.id)}
-                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
-                  selectedCategories.has(cat.id)
-                    ? "bg-gray-900 text-white border-gray-900"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {cat.name}
-              </button>
-            ))}
+      {categories.length > 0 && (() => {
+        const parents = categories.filter((c) => !c.parentId);
+        const childrenMap = categories.reduce<Record<string, typeof categories>>((acc, c) => {
+          if (c.parentId) {
+            if (!acc[c.parentId]) acc[c.parentId] = [];
+            acc[c.parentId].push(c);
+          }
+          return acc;
+        }, {});
+
+        return (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">
+              Categories
+            </label>
+            <div className="space-y-3">
+              {parents.map((parent) => {
+                const children = childrenMap[parent.id] || [];
+                return (
+                  <div key={parent.id}>
+                    <button
+                      type="button"
+                      onClick={() => toggleCategory(parent.id)}
+                      className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium border transition-colors ${
+                        selectedCategories.has(parent.id)
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                      }`}
+                    >
+                      {parent.name}
+                    </button>
+                    {children.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5 pl-3">
+                        {children.map((child) => (
+                          <button
+                            key={child.id}
+                            type="button"
+                            onClick={() => toggleCategory(child.id)}
+                            className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs border transition-colors ${
+                              selectedCategories.has(child.id)
+                                ? "bg-gray-700 text-white border-gray-700"
+                                : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
+                            }`}
+                          >
+                            {child.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-gray-700">Images</label>

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/db";
 import { products, productCategories, categories } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, asc } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { CategoryFilterSelect } from "@/components/category-filter-select";
 
@@ -13,7 +13,7 @@ export default async function ProductsPage(props: {
   const allCategories = await db
     .select()
     .from(categories)
-    .orderBy(categories.name);
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
 
   const validCategoryId =
     filterCategoryId && allCategories.some((c) => c.id === filterCategoryId)
@@ -72,7 +72,7 @@ export default async function ProductsPage(props: {
         <CategoryFilterSelect
           basePath="/admin/products"
           currentCategoryId={validCategoryId}
-          options={allCategories.map((c) => ({ value: c.id, label: c.name }))}
+          options={allCategories.map((c) => ({ value: c.id, label: c.name, parentId: c.parentId }))}
         />
         <span className="text-sm text-gray-500">
           {allProducts.length} product{allProducts.length !== 1 ? "s" : ""}

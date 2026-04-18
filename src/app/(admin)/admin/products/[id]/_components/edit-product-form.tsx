@@ -30,7 +30,7 @@ type VariationImage = {
   imageUrl: string;
 };
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; parentId: string | null };
 
 type Props = {
   product: ProductData;
@@ -214,22 +214,50 @@ export function EditProductForm({
             <div className="p-6 pt-0">
               <form action={syncProductCategories}>
                 <input type="hidden" name="productId" value={product.id} />
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {categories.map((cat) => (
-                    <label
-                      key={cat.id}
-                      className="inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <input
-                        type="checkbox"
-                        name="categoryIds"
-                        value={cat.id}
-                        defaultChecked={productCategoryIds.includes(cat.id)}
-                        className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
-                      />
-                      <span className="text-sm text-gray-700">{cat.name}</span>
-                    </label>
-                  ))}
+                <div className="space-y-3 mb-4">
+                  {(() => {
+                    const parents = categories.filter((c) => !c.parentId);
+                    const childrenMap = categories.reduce<Record<string, Category[]>>((acc, c) => {
+                      if (c.parentId) {
+                        if (!acc[c.parentId]) acc[c.parentId] = [];
+                        acc[c.parentId].push(c);
+                      }
+                      return acc;
+                    }, {});
+                    return parents.map((parent) => {
+                      const children = childrenMap[parent.id] || [];
+                      return (
+                        <div key={parent.id}>
+                          <label className="inline-flex items-center gap-1.5 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              name="categoryIds"
+                              value={parent.id}
+                              defaultChecked={productCategoryIds.includes(parent.id)}
+                              className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                            />
+                            <span className="text-sm font-medium text-gray-700">{parent.name}</span>
+                          </label>
+                          {children.length > 0 && (
+                            <div className="flex flex-wrap gap-x-4 gap-y-1.5 mt-1.5 pl-6">
+                              {children.map((child) => (
+                                <label key={child.id} className="inline-flex items-center gap-1.5 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    name="categoryIds"
+                                    value={child.id}
+                                    defaultChecked={productCategoryIds.includes(child.id)}
+                                    className="rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+                                  />
+                                  <span className="text-sm text-gray-600">{child.name}</span>
+                                </label>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    });
+                  })()}
                 </div>
                 <button
                   type="submit"
@@ -244,17 +272,17 @@ export function EditProductForm({
 
         {/* ── Product Images ── */}
         <div className="bg-white rounded-lg border border-gray-200">
-          <div className="p-6 pb-4 flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-gray-900">
+          <div className="p-6 pb-4 flex items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-gray-900 shrink-0">
               Product Images ({images.length})
             </h3>
             <button
               type="button"
               onClick={() => productFileRef.current?.click()}
               disabled={uploadingProduct}
-              className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-sm font-medium h-9 px-4 hover:bg-gray-800 transition-colors disabled:opacity-50"
+              className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-xs sm:text-sm font-medium h-8 sm:h-9 px-3 sm:px-4 hover:bg-gray-800 transition-colors disabled:opacity-50 shrink-0"
             >
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload className="mr-1.5 h-3.5 w-3.5 sm:mr-2 sm:h-4 sm:w-4" />
               {uploadingProduct ? "Uploading..." : "Upload Images"}
             </button>
             <input
@@ -298,7 +326,7 @@ export function EditProductForm({
                 </p>
               </div>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 {images.map((img) => (
                   <div
                     key={img.id}
@@ -349,52 +377,31 @@ export function EditProductForm({
           </div>
           <div className="p-6 pt-0 space-y-4">
             {sizeVariations.length > 0 ? (
-              <table className="w-full text-sm">
-                <thead className="border-b border-gray-200">
-                  <tr>
-                    <th className="text-left py-3 px-4 text-gray-500 font-medium">
-                      Value
-                    </th>
-                    <th className="text-left py-3 px-4 text-gray-500 font-medium">
-                      Price Adjustment
-                    </th>
-                    <th className="text-left py-3 px-4 text-gray-500 font-medium w-24" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {sizeVariations.map((v) => (
-                    <tr
-                      key={v.id}
-                      className="border-b border-gray-100 last:border-0"
-                    >
-                      <td className="py-3 px-4 text-gray-900">{v.value}</td>
-                      <td className="py-3 px-4 text-gray-600">
+              <div className="space-y-2">
+                {sizeVariations.map((v) => (
+                  <div
+                    key={v.id}
+                    className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="text-sm font-medium text-gray-900">{v.value}</span>
+                      <span className="text-sm text-gray-500">
                         £{Number(v.priceAdjustment).toFixed(2)}
-                      </td>
-                      <td className="py-3 px-4">
-                        <form action={deleteVariation}>
-                          <input
-                            type="hidden"
-                            name="variationId"
-                            value={v.id}
-                          />
-                          <input
-                            type="hidden"
-                            name="productId"
-                            value={product.id}
-                          />
-                          <button
-                            type="submit"
-                            className="text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium h-8 px-3 transition-colors"
-                          >
-                            Remove
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </span>
+                    </div>
+                    <form action={deleteVariation}>
+                      <input type="hidden" name="variationId" value={v.id} />
+                      <input type="hidden" name="productId" value={product.id} />
+                      <button
+                        type="submit"
+                        className="text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium h-8 px-3 transition-colors shrink-0"
+                      >
+                        Remove
+                      </button>
+                    </form>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-gray-500">No size variations yet.</p>
             )}
@@ -403,7 +410,7 @@ export function EditProductForm({
               <h4 className="text-sm font-medium text-gray-900 mb-3">
                 Add Size
               </h4>
-              <form action={addVariation} className="flex items-end gap-3">
+              <form action={addVariation} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
                 <input type="hidden" name="productId" value={product.id} />
                 <input type="hidden" name="type" value="size" />
 
@@ -415,20 +422,20 @@ export function EditProductForm({
                     name="value"
                     required
                     placeholder="e.g. M, L, XL"
-                    className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-700">
-                    Price Adjustment
+                    Price Adj.
                   </label>
                   <input
                     name="priceAdjustment"
                     type="number"
                     step="0.01"
                     defaultValue="0"
-                    className="w-36 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
 
@@ -469,40 +476,32 @@ export function EditProductForm({
                   className="border border-gray-200 rounded-lg"
                 >
                   {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3">
+                  <div className="flex items-center justify-between gap-2 px-4 py-3">
                     <button
                       type="button"
                       onClick={() => toggleColor(color.id)}
-                      className="flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700"
+                      className="flex items-center gap-1.5 sm:gap-2 text-sm font-medium text-gray-900 hover:text-gray-700 min-w-0"
                     >
                       {expanded ? (
-                        <ChevronDown className="h-4 w-4" />
+                        <ChevronDown className="h-4 w-4 shrink-0" />
                       ) : (
-                        <ChevronRight className="h-4 w-4" />
+                        <ChevronRight className="h-4 w-4 shrink-0" />
                       )}
-                      {color.value}
-                      <span className="text-gray-400 font-normal">
+                      <span className="truncate">{color.value}</span>
+                      <span className="text-gray-400 font-normal shrink-0">
                         (£{Number(color.priceAdjustment).toFixed(2)})
                       </span>
-                      <span className="text-gray-400 font-normal text-xs">
+                      <span className="text-gray-400 font-normal text-xs shrink-0 hidden sm:inline">
                         {imgs.length} image{imgs.length !== 1 && "s"}
                       </span>
                     </button>
 
                     <form action={deleteVariation}>
-                      <input
-                        type="hidden"
-                        name="variationId"
-                        value={color.id}
-                      />
-                      <input
-                        type="hidden"
-                        name="productId"
-                        value={product.id}
-                      />
+                      <input type="hidden" name="variationId" value={color.id} />
+                      <input type="hidden" name="productId" value={product.id} />
                       <button
                         type="submit"
-                        className="text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium h-8 px-3 transition-colors"
+                        className="text-red-600 hover:bg-red-50 rounded-lg text-xs font-medium h-8 px-3 transition-colors shrink-0"
                       >
                         Remove
                       </button>
@@ -513,8 +512,8 @@ export function EditProductForm({
                   {expanded && (
                     <div className="border-t border-gray-100 px-4 py-4 space-y-3">
                       {/* Upload button */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-gray-500 truncate">
                           Images for {color.value}
                         </span>
                         <button
@@ -523,7 +522,7 @@ export function EditProductForm({
                             variationFileRefs.current[color.id]?.click()
                           }
                           disabled={uploadingVariation === color.id}
-                          className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-xs font-medium h-8 px-3 hover:bg-gray-800 transition-colors disabled:opacity-50"
+                          className="inline-flex items-center justify-center rounded-lg bg-gray-900 text-white text-xs font-medium h-8 px-3 hover:bg-gray-800 transition-colors disabled:opacity-50 shrink-0"
                         >
                           <Upload className="mr-1.5 h-3.5 w-3.5" />
                           {uploadingVariation === color.id
@@ -571,7 +570,7 @@ export function EditProductForm({
                           </p>
                         </div>
                       ) : (
-                        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                           {imgs.map((img) => (
                             <div
                               key={img.id}
@@ -621,7 +620,7 @@ export function EditProductForm({
               <h4 className="text-sm font-medium text-gray-900 mb-3">
                 Add Color
               </h4>
-              <form action={addVariation} className="flex items-end gap-3">
+              <form action={addVariation} className="grid grid-cols-[1fr_1fr_auto] gap-3 items-end">
                 <input type="hidden" name="productId" value={product.id} />
                 <input type="hidden" name="type" value="color" />
 
@@ -633,20 +632,20 @@ export function EditProductForm({
                     name="value"
                     required
                     placeholder="e.g. Blue, Red"
-                    className="w-40 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-700">
-                    Price Adjustment
+                    Price Adj.
                   </label>
                   <input
                     name="priceAdjustment"
                     type="number"
                     step="0.01"
                     defaultValue="0"
-                    className="w-36 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
                   />
                 </div>
 

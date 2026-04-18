@@ -11,7 +11,7 @@ import {
   categories,
   productCategories,
 } from "@/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, asc } from "drizzle-orm";
 import { deleteFile } from "@/lib/s3";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
@@ -343,7 +343,7 @@ export default async function EditProductPage(props: {
   const allCategories = await db
     .select()
     .from(categories)
-    .orderBy(categories.name);
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
 
   const productCats = await db
     .select({ categoryId: productCategories.categoryId })
@@ -367,7 +367,7 @@ export default async function EditProductPage(props: {
         priceAdjustment: v.priceAdjustment,
       }))}
       variationImages={varImages}
-      categories={allCategories.map((c) => ({ id: c.id, name: c.name }))}
+      categories={allCategories.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId }))}
       productCategoryIds={productCats.map((pc) => pc.categoryId)}
       updateProduct={updateProduct}
       uploadProductImages={uploadProductImages}

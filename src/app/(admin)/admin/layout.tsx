@@ -15,7 +15,7 @@ const navItems: NavItem[] = [
     children: [{ title: "Categories", href: "/admin/categories" }],
   },
   { title: "Companies", href: "/admin/companies", icon: "Building2" },
-  { title: "Kits", href: "/admin/kits", icon: "BookOpen" },
+  { title: "Kits", href: "/admin/kits", icon: "Package" },
   { title: "Orders", href: "/admin/orders", icon: "ShoppingCart" },
   { title: "Users", href: "/admin/users", icon: "Users" },
   { title: "Settings", href: "/admin/settings", icon: "Settings" },

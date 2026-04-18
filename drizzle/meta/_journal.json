@@ -64,6 +64,13 @@
       "when": 1776347000000,
       "tag": "0008_user_is_admin",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1776348000000,
+      "tag": "0009_add_category_parent",
+      "breakpoints": true
     }
   ]
 }

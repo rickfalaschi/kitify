@@ -1,5 +1,6 @@
 import { db } from "@/db";
 import { products, productImages, categories, productCategories } from "@/db/schema";
+import { asc } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { CreateProductForm } from "./_components/create-product-form";
 import { auth } from "@/lib/auth";
@@ -52,7 +53,7 @@ export default async function NewProductPage() {
   const allCategories = await db
     .select()
     .from(categories)
-    .orderBy(categories.name);
+    .orderBy(asc(categories.sortOrder), asc(categories.name));
 
   return (
     <div>
@@ -69,7 +70,7 @@ export default async function NewProductPage() {
         <div className="p-6 pt-0">
           <CreateProductForm
             createProductAction={createProductAction}
-            categories={allCategories.map((c) => ({ id: c.id, name: c.name }))}
+            categories={allCategories.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId }))}
           />
         </div>
       </div>
