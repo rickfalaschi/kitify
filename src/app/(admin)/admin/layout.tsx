@@ -49,6 +49,7 @@ export default async function AdminLayout({
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/80">
       <AppSidebar
         title="Kitify Admin"
+        homeHref="/admin"
         items={navItems}
         profileHref="/admin/profile"
         contextLink={contextLink}

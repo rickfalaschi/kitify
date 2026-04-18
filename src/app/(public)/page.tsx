@@ -164,7 +164,7 @@ function Hero() {
                 <span className="h-2.5 w-2.5 rounded-full bg-green-400" />
               </div>
               <span className="text-xs font-medium text-gray-400">
-                Acme Welcome Kit
+                Welcome Kit
               </span>
             </div>
             <div className="p-6">
@@ -673,7 +673,9 @@ function CTAFooter() {
           </div>
           <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-500">
             <p>© {new Date().getFullYear()} Kitify. All rights reserved.</p>
-            <p>Custom branded products for companies.</p>
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy Policy
+            </Link>
           </div>
         </div>
       </footer>

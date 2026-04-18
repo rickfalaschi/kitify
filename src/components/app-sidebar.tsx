@@ -56,6 +56,7 @@ interface UserData {
 
 interface AppSidebarProps {
   title: string;
+  homeHref?: string;
   items: NavItem[];
   topSlot?: React.ReactNode;
   profileHref?: string;
@@ -63,7 +64,7 @@ interface AppSidebarProps {
   user: UserData;
 }
 
-export function AppSidebar({ title, items, topSlot, profileHref, contextLink, user }: AppSidebarProps) {
+export function AppSidebar({ title, homeHref = "/", items, topSlot, profileHref, contextLink, user }: AppSidebarProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -92,7 +93,7 @@ export function AppSidebar({ title, items, topSlot, profileHref, contextLink, us
       />
       <div className="relative z-10 flex flex-col h-full">
         <div className="border-b border-white/10 px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={homeHref} className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src="/kitify-logo.svg"
@@ -182,7 +183,7 @@ export function AppSidebar({ title, items, topSlot, profileHref, contextLink, us
         >
           <Menu className="h-5 w-5" />
         </button>
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={homeHref} className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/kitify-logo.svg" alt="Kitify" className="h-7 w-auto" />
           {title !== "Kitify" && (

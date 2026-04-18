@@ -6,6 +6,8 @@ import { auth } from "@/lib/auth";
 import {
   updateProfileAction,
   changePasswordAction,
+  exportDataAction,
+  deleteAccountAction,
 } from "@/lib/profile-actions";
 import { ProfileForm } from "@/components/profile-form";
 
@@ -25,8 +27,11 @@ export async function ProfilePageContents() {
   return (
     <ProfileForm
       user={user}
+      isAdmin={session.user.isAdmin}
       updateProfile={updateProfileAction}
       changePassword={changePasswordAction}
+      exportData={exportDataAction}
+      deleteAccount={deleteAccountAction}
     />
   );
 }

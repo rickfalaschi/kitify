@@ -73,6 +73,7 @@ export default async function CompanyLayout({
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/80">
       <AppSidebar
         title="Kitify"
+        homeHref="/dashboard"
         items={navItems}
         topSlot={
           <CompanySwitcher

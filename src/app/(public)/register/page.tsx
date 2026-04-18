@@ -146,6 +146,12 @@ export default function RegisterPage() {
                 Sign in
               </Link>
             </p>
+            <p className="mt-4 text-center text-xs text-gray-400">
+              By creating an account, you agree to our{" "}
+              <Link href="/privacy" className="underline hover:text-gray-600 transition-colors">
+                Privacy Policy
+              </Link>
+            </p>
           </div>
         </div>
       </div>

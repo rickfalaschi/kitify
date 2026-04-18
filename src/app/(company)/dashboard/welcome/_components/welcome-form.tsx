@@ -75,14 +75,6 @@ export function WelcomeForm({ userName, isFirstCompany, backHref, backLabel, cre
       <div className="relative w-full max-w-md">
         <div className="rounded-2xl bg-white shadow-2xl shadow-black/40 overflow-hidden">
           <div className="p-8 pb-0 text-center">
-            <Link href="/" className="inline-flex items-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/kitify-logo-dark.svg"
-                alt="Kitify"
-                className="h-9 w-auto"
-              />
-            </Link>
             {userName && (
               <p className="mt-6 text-sm text-red-600 font-medium">
                 Welcome, {userName}

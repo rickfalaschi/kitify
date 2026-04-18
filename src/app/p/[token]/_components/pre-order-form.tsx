@@ -342,8 +342,21 @@ export function PreOrderForm({
             </div>
           </div>
 
-          {/* Submit */}
-          <div className="flex justify-center">
+          {/* Privacy notice + Submit */}
+          <div className="text-center space-y-4">
+            <p className="text-xs text-gray-400">
+              Your information is processed by Kitify on behalf of{" "}
+              {companyName} to fulfil your kit delivery. See our{" "}
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-gray-600 transition-colors"
+              >
+                Privacy Policy
+              </a>{" "}
+              for details on how we handle your data.
+            </p>
             <button
               type="submit"
               disabled={pending}
