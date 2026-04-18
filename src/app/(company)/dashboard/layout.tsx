@@ -52,11 +52,7 @@ export default async function CompanyLayout({
   // under /dashboard/* will trigger getCompany() and be redirected to
   // /dashboard/welcome anyway.
   if (memberships.length === 0) {
-    return (
-      <div className="min-h-screen bg-gray-50/80">
-        <main className="mx-auto max-w-2xl px-6 py-16">{children}</main>
-      </div>
-    );
+    return <>{children}</>;
   }
 
   const cookieStore = await cookies();

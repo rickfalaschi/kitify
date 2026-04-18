@@ -43,7 +43,7 @@ export default async function AdminLayout({
 
   const contextLink = hasMemberships
     ? { href: "/dashboard", label: "My companies", icon: "companies" as const }
-    : { href: "/dashboard/welcome", label: "Create company", icon: "create" as const };
+    : { href: "/dashboard/welcome?from=admin", label: "Create company", icon: "create" as const };
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50/80">

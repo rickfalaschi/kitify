@@ -6,15 +6,13 @@ import { companyUsers } from "@/db/schema";
 import { createCompanyAction } from "../_actions/create-company";
 import { WelcomeForm } from "./_components/welcome-form";
 
-// Onboarding route. This renders under the dashboard layout's "minimal
-// shell" branch (layout detects zero memberships and skips the sidebar).
-//
-// If an authenticated user somehow lands here with at least one membership
-// already, we bounce them to /dashboard so they don't see the onboarding
-// screen instead of their data.
-export default async function DashboardWelcomePage() {
+export default async function DashboardWelcomePage(props: {
+  searchParams: Promise<{ from?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+
+  const { from } = await props.searchParams;
 
   const existing = await db
     .select({ companyId: companyUsers.companyId })
@@ -23,23 +21,37 @@ export default async function DashboardWelcomePage() {
     .orderBy(asc(companyUsers.createdAt))
     .limit(1);
 
-  if (existing.length > 0) redirect("/dashboard");
+  const hasMemberships = existing.length > 0;
+  const isAdmin = session.user.isAdmin;
+
+  // Determine back link
+  let backHref: string | null = null;
+  let backLabel: string | null = null;
+
+  if (from === "admin" && isAdmin) {
+    backHref = "/admin";
+    backLabel = "Back to admin";
+  } else if (from === "dashboard" && hasMemberships) {
+    backHref = "/dashboard";
+    backLabel = "Back to dashboard";
+  } else if (isAdmin) {
+    // No param but admin — default to admin
+    backHref = "/admin";
+    backLabel = "Back to admin";
+  } else if (hasMemberships) {
+    // No param but has companies — default to dashboard
+    backHref = "/dashboard";
+    backLabel = "Back to dashboard";
+  }
+  // else: non-admin with no companies — no back link, show Welcome + Sign out
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm sm:p-10">
-      <div className="mb-6">
-        <p className="text-sm font-medium text-red-600">Welcome{session.user.name ? `, ${session.user.name}` : ""}</p>
-        <h1 className="mt-1 text-2xl font-bold text-gray-900">
-          Let&apos;s set up your first company
-        </h1>
-        <p className="mt-2 text-sm text-gray-500">
-          You don&apos;t belong to any company yet. Create one below to start
-          building kits, inviting teammates, and placing orders. You can
-          always add more companies or switch between them later from the
-          sidebar.
-        </p>
-      </div>
-      <WelcomeForm createAction={createCompanyAction} />
-    </div>
+    <WelcomeForm
+      userName={!backHref ? (session.user.name ?? undefined) : undefined}
+      isFirstCompany={!hasMemberships}
+      backHref={backHref}
+      backLabel={backLabel}
+      createAction={createCompanyAction}
+    />
   );
 }
